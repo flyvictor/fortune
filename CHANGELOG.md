@@ -1,13 +1,18 @@
-## Roadmap
-
-- 100% test coverage.
-- Compound documents.
-- Querying, pagination, sorting.
-- Support more schema properties & options.
-
 ## Changelog
+**v0.2.2 (4/15/2014)**
+* Add resource creation with `linked` entities.
+
+**v0.2.1 (4/7/2014)**
+* Small fix for checking the environment variable.
+
+**v0.2.0 (4/7/2014)**
+* Add `path` option for NeDB adapter to allow specifying where data is stored.
+* Add `inflect` option to disable automatic pluralization of resource names.
+* Automatically append top-level `links` object.
+* Remove `production` boolean option in favor of `environment` string.
+
 **v0.1.17 (11/27/2013)**
-* Fix flags option for NeDB adapter, enabling fortune to run in memory.
+* Fix flags option for NeDB adapter, enabling Fortune to run in memory.
 * Trace error when `awaitConnection` fails.
 
 **v0.1.16 (11/12/2013)**

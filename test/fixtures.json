@@ -1,5 +1,5 @@
 {
-  "people": [
+  "person": [
     {
       "name": "Dilbert",
       "appearances": 3457,
@@ -16,7 +16,7 @@
       "email": "robert@mailbert.com"
     }
   ],
-  "pets": [
+  "pet": [
     {
       "name": "Dogbert",
       "appearances": 1903
