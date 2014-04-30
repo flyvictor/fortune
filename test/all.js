@@ -2,6 +2,7 @@ var should = require('should')
 , _ = require('lodash')
 , RSVP = require('rsvp')
 , request = require('supertest')
+, inflect = require('i')()
 , fixtures = require('./fixtures.json');
 
 var Promise = RSVP.Promise;
@@ -157,27 +158,27 @@ _.each(global.options, function (options, port) {
       it('should be able to dissociate', function (done) {
         new Promise(function (resolve) {
           request(baseUrl)
-            .patch('/' + keys.person + '/' + ids[keys.person][0])
+            .patch('/' + 'people' + '/' + ids['people'][0])
             .send([
-              {path: '/' + keys.person + '/0/links/pets', op: 'replace', value: []}
+              {path: '/' + 'people' + '/0/links/pets', op: 'replace', value: []}
             ])
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function (error, response) {
               should.not.exist(error);
               var body = JSON.parse(response.text);
-              should.not.exist(body[keys.person][0].links);
+              should.not.exist(body['people'][0].links);
               resolve();
             });
         }).then(function () {
           request(baseUrl)
-            .get('/' + keys.pet + '/' + ids[keys.pet][0])
+            .get('/' + 'pets' + '/' + ids['pets'][0])
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function (error, response) {
               should.not.exist(error);
               var body = JSON.parse(response.text);
-              should.not.exist(body[keys.pet][0].links);
+              should.not.exist(body['pets'][0].links);
               done();
             });
         });
@@ -228,27 +229,27 @@ _.each(global.options, function (options, port) {
       it('should be able to dissociate', function (done) {
         new Promise(function (resolve) {
           request(baseUrl)
-            .patch('/' + keys.pet + '/' + ids[keys.pet][0])
+            .patch('/' + 'pets' + '/' + ids['pets'][0])
             .send([
-              {path: '/' + keys.pet + '/0/links/owner', op: 'replace', value: null}
+              {path: '/' + 'pets' + '/0/links/owner', op: 'replace', value: null}
             ])
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function (error, response) {
               should.not.exist(error);
               var body = JSON.parse(response.text);
-              should.not.exist(body[keys.pet][0].links);
+              should.not.exist(body['pets'][0].links);
               resolve();
             });
         }).then(function () {
           request(baseUrl)
-            .get('/' + keys.person + '/' + ids[keys.person][1])
+            .get('/' + 'people' + '/' + ids['people'][1])
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function (error, response) {
               should.not.exist(error);
               var body = JSON.parse(response.text);
-              should.not.exist(body[keys.person][0].links);
+              should.not.exist(body['people'][0].links);
               done();
             });
         });
@@ -302,7 +303,7 @@ _.each(global.options, function (options, port) {
             });
         }).then(function () {
           request(baseUrl)
-            .get('/' + keys.person + '/' + ids[keys.person][1])
+            .get('/' + 'people' + '/' + ids['people'][1])
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function (error, response) {
@@ -348,7 +349,7 @@ _.each(global.options, function (options, port) {
       it('should be able to dissociate', function(done) {
         new RSVP.Promise(function(resolve, reject) {
           request(baseUrl)
-            .patch('/' + keys.person + '/' + ids[keys.person][0])
+            .patch('/' + 'people' + '/' + ids['people'][0])
             .send([
               {path: '/people/0/links/lovers', op: 'replace', value: []}
             ])
@@ -357,18 +358,18 @@ _.each(global.options, function (options, port) {
             .end(function (error, response) {
               should.not.exist(error);
               var body = JSON.parse(response.text);
-              should.not.exist(body[keys.person][0].links);
+              should.not.exist(body['people'][0].links);
               resolve();
             });
         }).then(function () {
           request(baseUrl)
-            .get('/' + keys.person + '/' + ids[keys.person][1])
+            .get('/' + 'people' + '/' + ids['people'][1])
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function (error, response) {
               should.not.exist(error);
               var body = JSON.parse(response.text);
-              should.not.exist(body[keys.person][0].links);
+              should.not.exist(body['people'][0].links);
               done();
             });
         });

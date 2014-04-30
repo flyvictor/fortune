@@ -41,7 +41,7 @@ function runTests(adapters) {
 
     global.options[port] = options;
 
-    apps.push(require('./app')(options, port));
+    apps.push(require('./app')(adapter, options, port));
 
   });
 
