@@ -14,7 +14,7 @@ if (!process.env.TRAVIS) {
   runTests(config);
 } else {
   runTests({
-    nedb: 8890,
+    //nedb: 8890,
     mongodb: 8891
     //mysql: 8892
   });
