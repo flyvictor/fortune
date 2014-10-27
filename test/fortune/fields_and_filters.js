@@ -634,5 +634,21 @@ module.exports = function(options){
           });
       });
     });
+
+    describe('offset', function() {
+      it('should be possible to offset results', function(done){
+        request(baseUrl).get('/people?sort=name&limit=2&offset=1')
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            console.log(body);
+            (body.people.length).should.equal(2);
+            _.pluck(body.people, "name").should.eql(["Robert", "Sally"]);
+            done();
+          });
+      });
+    });
+
   });
 };
