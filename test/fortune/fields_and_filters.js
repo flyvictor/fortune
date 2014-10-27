@@ -642,7 +642,6 @@ module.exports = function(options){
           .end(function(err, res){
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            console.log(body);
             (body.people.length).should.equal(2);
             _.pluck(body.people, "name").should.eql(["Robert", "Sally"]);
             done();
