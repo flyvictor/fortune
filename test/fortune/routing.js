@@ -513,5 +513,24 @@ module.exports = function(options){
           });
       });
     });
+    describe('swagger metadata', function(){
+      it('should be able to expose swagger metadata', function(done){
+        request(baseUrl).get('/resources?format=swagger')
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            should.exist(body.apiVersion);
+            (body.apis).should.be.an.Array;
+            should.exist(body.basePath);
+            should.exist(body.models);
+            (body.produces).should.be.an.Array;
+            should.exist(body.resourcePath);
+            should.exist(body.swaggerVersion);
+            should.exist(body.test);
+            done();
+          });
+      });
+    });
   });
 };
