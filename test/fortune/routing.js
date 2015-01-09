@@ -527,7 +527,6 @@ module.exports = function(options){
             (body.produces).should.be.an.Array;
             should.exist(body.resourcePath);
             should.exist(body.swaggerVersion);
-            should.exist(body.test);
             done();
           });
       });
