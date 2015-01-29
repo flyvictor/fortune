@@ -1,6 +1,7 @@
 box: wercker/nodejs
 services:
     - wercker/mongodb
+    - mies/couchdb
 no-response-timeout: 15
 build:
   steps:
