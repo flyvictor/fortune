@@ -8,7 +8,8 @@ var fortune = require('../lib/fortune');
 fortune({
 
   adapter: "neo4jdb",
-  db: 'projects'
+  db: 'projects',
+  debug:true
 
 })
 
