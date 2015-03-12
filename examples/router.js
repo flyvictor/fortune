@@ -10,7 +10,7 @@ var app = express();
 
 fortune({
 
-  adapter: "mongodb",
+  adapter: "neo4jdb",
   db: 'router_1',
   router: app,
   serviceName: "user-service"
