@@ -19,6 +19,7 @@ describe('Fortune', function () {
 
 
   require('./actions')(options);
+  require('./custom-types')(options);
   require('./routing')(options);
   require('./associations')(options);
   require('./fields_and_filters')(options);
