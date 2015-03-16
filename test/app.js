@@ -141,7 +141,10 @@ module.exports = function(options, port, ioPort) {
         header: 'beforeReadSecond'
       }
     })
-
+    .customType('price', { //Custom type for price declared
+        value : Number,
+        currency : String
+    })
     .resource('house', {
       address: String,
       owners: [{ref: 'person', inverse: 'houses', pkType: String}],
@@ -168,7 +171,8 @@ module.exports = function(options, port, ioPort) {
       MOT: {ref: 'service', external: true, type: String},
       additionalDetails: {
         seats: Number,
-        wheels: Number
+        wheels: Number,
+        price : 'price'  //Custom type used
       }
     },{
       model: { pk: "licenseNumber" },
