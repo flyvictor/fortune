@@ -19,6 +19,7 @@ describe('Fortune', function () {
 
 
   require('./actions')(options);
+  require('./aggregates')(options);
   require('./routing')(options);
   require('./associations')(options);
   require('./fields_and_filters')(options);
@@ -48,7 +49,7 @@ describe('Fortune', function () {
 
     it("is indexed and unique", function(done){
       var model;
-      
+
       (model = app.adapter.model("person")).collection.getIndexes(function(err,indexData){
         model.pk.should.be.ok;
         indexData[model.pk+"_1"].should.be.ok
