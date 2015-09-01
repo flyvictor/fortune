@@ -45,7 +45,7 @@ module.exports = function(options){
             .send(JSON.stringify({people: [
               {email: 'dilbert@mailbert.com', _tenantId: 'testing'}
             ]}))
-            .expect(500)
+            .expect(409)
             .end(function(err){
               should.not.exist(err);
               done();
