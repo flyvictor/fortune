@@ -138,6 +138,24 @@ module.exports = function(options){
             done();
           });
       });
+      it.only('should allow resource filtering by negative numbers', function(done){
+        request(baseUrl).patch('/people/' + ids.people[0])
+          .set('content-type', 'application/json')
+          .send(JSON.stringify([
+            {op: 'replace', path: '/people/0/appearances', value: -1234}
+          ]))
+          .end(function(err){
+            should.not.exist(err);
+            request(baseUrl).get('/people?filter[appearances][$gte]=-1232')
+              .end(function(err, res){
+                should.not.exist(err);
+                var body = JSON.parse(res.text);
+                console.log(body.people);
+                body.people.length.should.equal(1);
+                done();
+              });
+          });
+      });
       it("should allow resource sub-document filtering based on a numeric value", function(done){
         request(baseUrl).get("/cars?filter[additionalDetails.seats]=2")
           .end(function(err, res){
