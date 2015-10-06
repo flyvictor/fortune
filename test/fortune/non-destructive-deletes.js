@@ -1,4 +1,5 @@
 var should = require('should');
+var _ = require('lodash');
 var lodash = require('lodash');
 var request = require('supertest');
 var RSVP = require('rsvp');
@@ -23,6 +24,116 @@ module.exports = function(options){
           });
           done();
         })
+    });
+    it('should send deleted links in regular links namespace for one-way links', function(done){
+      request(baseUrl).patch('/people/' + ids.people[0])
+        .set('content-type', 'application/json')
+        .send(JSON.stringify([
+          {op: 'replace', path: '/people/0/links/pets', value: [ids.pets[0], ids.pets[1]]}
+        ]))
+        .end(function(err){
+          should.not.exist(err);
+          request(baseUrl).del('/people/' + ids.people[0])
+            .expect(204)
+            .end(function(err){
+              should.not.exist(err);
+              request(baseUrl).get('/people/' + ids.people[0] + '?includeDeleted=true')
+                .expect(200)
+                .end(function(err, res){
+                  should.not.exist(err);
+                  var body = JSON.parse(res.text);
+                  body.people[0].links.should.be.an.Object;
+                  body.people[0].links.pets.should.eql([
+                    ids.pets[0],
+                    ids.pets[1]
+                  ]);
+                  done();
+                });
+            });
+        });
+    });
+    it('should send deleted links in regular links namespace for inverse links', function(done){
+      request(baseUrl).patch('/people/' + ids.people[0])
+        .set('content-type', 'application/json')
+        .send(JSON.stringify([
+          {op: 'replace', path: '/people/0/links/cars', value: [ids.cars[0], ids.cars[1]]}
+        ]))
+        .end(function(err){
+          should.not.exist(err);
+          request(baseUrl).del('/people/' + ids.people[0])
+            .expect(204)
+            .end(function(err){
+              should.not.exist(err);
+              request(baseUrl).get('/people/' + ids.people[0] + '?includeDeleted=true')
+                .expect(200)
+                .end(function(err, res){
+                  should.not.exist(err);
+                  var body = JSON.parse(res.text);
+                  body.people[0].links.should.be.an.Object;
+                  body.people[0].links.cars.should.eql([
+                    ids.cars[0],
+                    ids.cars[1]
+                  ]);
+                  done();
+                });
+            });
+        });
+    });
+    it('should be able to include referenced resources of deleted resource', function(done){
+      request(baseUrl).patch('/people/' + ids.people[0])
+        .set('content-type', 'application/json')
+        .send(JSON.stringify([
+          {op: 'replace', path: '/people/0/links/cars', value: [ids.cars[0], ids.cars[1]]}
+        ]))
+        .end(function(err){
+          should.not.exist(err);
+          request(baseUrl).del('/people/' + ids.people[0])
+            .expect(204)
+            .end(function(err){
+              should.not.exist(err);
+              request(baseUrl).get('/people/' + ids.people[0] + '?include=cars&includeDeleted=true')
+                .expect(200)
+                .end(function(err, res){
+                  should.not.exist(err);
+                  var body = JSON.parse(res.text);
+                  body.people[0].links.should.be.an.Object;
+                  body.people[0].links.cars.should.eql([
+                    ids.cars[0],
+                    ids.cars[1]
+                  ]);
+                  body.linked.should.be.an.Object;
+                  should.exist(body.linked.cars);
+                  body.linked.cars.length.should.equal(2);
+                  done();
+                });
+            });
+        });
+    });
+    it('should include referenced resources which are deleted for requests with includeDeleted set to true', function(done){
+      request(baseUrl).patch('/people/' + ids.people[0])
+        .set('content-type', 'application/json')
+        .send(JSON.stringify([
+          {op: 'replace', path: '/people/0/links/cars', value: [ids.cars[0], ids.cars[1]]}
+        ]))
+        .expect(200)
+        .end(function(err){
+          should.not.exist(err);
+          request(baseUrl).del('/people/' + ids.people[0]).expect(204).end(function(err){
+              should.not.exist(err);
+              request(baseUrl).del('/cars').expect(204).end(function(err){
+                  should.not.exist(err);
+                  request(baseUrl).get('/people/' + ids.people[0] + '?includeDeleted=true&include=cars')
+                    .expect(200).end(function(err, res){
+                      should.not.exist(err);
+                      var body = JSON.parse(res.text);
+                      should.exist(body.linked);
+                      should.exist(body.linked.cars);
+                      body.linked.cars.length.should.equal(2);
+                      done();
+                    });
+                });
+            });
+        });
     });
     it('should mark item with deletedAt', function(done){
       request(baseUrl).del('/people/' + ids.people[0])
@@ -101,6 +212,19 @@ module.exports = function(options){
           });
         });
     });
+    it('should be able to destroy resource marked as deleted previously', function(done){
+      request(baseUrl).del('/people/' + ids.people[0])
+        .expect(204)
+        .end(function(err){
+          should.not.exist(err);
+          request(baseUrl).del('/people/' + ids.people[0] + '?destroy=1')
+            .expect(204)
+            .end(function(err){
+              should.not.exist(err);
+              done();
+            });
+        });
+    });
     it('should not delete resource if beforeHook returns false', function(done){
       request(baseUrl).del('/people/' + ids.people[0] + '?failbeforeAll=1')
         .expect(321)
@@ -162,6 +286,60 @@ module.exports = function(options){
           done();
         });
       });
+    });
+    it('should return deleted resource if it is requested explicitly', function(done){
+      request(baseUrl).del('/people/' + ids.people[0]).end(function(err) {
+        should.not.exist(err);
+        request(baseUrl).get('/people?includeDeleted=true').end(function(err, res){
+          var body = JSON.parse(res.text);
+          var del = _.find(body.people, function(p){return p.id === ids.people[0]});
+          should.exist(del);
+          request(baseUrl).get('/people/' + ids.people[0] + '?includeDeleted=true').end(function(err, res){
+            var body = JSON.parse(res.text);
+            should.exist(body.people[0]);
+            done();
+          });
+        });
+      });
+    });
+
+    it('should not return deleted item with /:resource/:id/:linked response', function(done){
+      request(baseUrl).patch('/people/' + ids.people[0]).set('content-type', 'application/json')
+        .send(JSON.stringify([{op: 'replace', path: '/people/0/addresses', value: [ids.addresses[0], ids.addresses[1]]}]))
+        .end(function(err, res){
+          should.not.exist(err);
+          request(baseUrl).del('/addresses/' + ids.addresses[0]).end(function(){
+            request(baseUrl).get('/people/' + ids.people[0] + '/addresses')
+              .expect(200)
+              .end(function(err, res){
+                should.not.exist(err);
+                var body = JSON.parse(res.text);
+                body.addresses.length.should.equal(1);
+                done();
+              });
+          });
+        });
+    });
+    it('should update resource on PATCH requests even if it is deleted', function(done){
+      request(baseUrl).del('/people/' + ids.people[0]).end(function(err){
+        should.not.exist(err);
+        request(baseUrl).patch('/people/' + ids.people[0] + '?includeDeleted=true')
+          .set('content-type', 'application/json')
+          .send(JSON.stringify([
+            {op: 'replace', path: '/people/0/name', value: 'DOA'}
+          ]))
+          .expect(200)
+          .end(function(err){
+            should.not.exist(err);
+            request(baseUrl).get('/people/' + ids.people[0] + '?includeDeleted=true')
+              .end(function(err, res){
+                should.not.exist(err);
+                var body = JSON.parse(res.text);
+                body.people[0].name.should.equal('DOA');
+                done();
+              });
+          });
+      })
     });
     it.skip('should allow PUT request replacing old document with new one', function(done){
       request(baseUrl).del('/people/' + ids.people[0]).end(function(err){

@@ -7,12 +7,14 @@ var Promise = RSVP.Promise;
 var fixtures = require('./fixtures.json');
 
 var port = 8891;
+var ioPort = 8892;
 var baseUrl = 'http://localhost:' + port;
 
 describe('Fortune test runner', function(){
   var options = {
     app: null,
     port: port,
+    ioPort: ioPort,
     baseUrl: baseUrl,
     ids: {}
   };
@@ -27,8 +29,9 @@ describe('Fortune test runner', function(){
     options.app = require("./app")({
       adapter: "mongodb",
       connectionString: remoteDB || "mongodb://localhost/fortune_test",
-      inflect: true
-    }, port);
+      inflect: true,
+      enableWebsockets: true
+    }, port, ioPort);
 
     var app = options.app;
     options.app.adapter.awaitConnection().then(function(){
@@ -75,6 +78,7 @@ describe('Fortune test runner', function(){
 
   beforeEach(function(done) { 
     var createResources = [];
+    // console.log("runner beforeEach inserting resources");
 
     _.each(fixtures, function (resources, collection) {
       createResources.push(new Promise(function (resolve) {

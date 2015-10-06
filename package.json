@@ -12,14 +12,20 @@
     "url": "git@github.com:flyvictor/fortune.git"
   },
   "dependencies": {
-    "mkdirp": "~0.3.5",
+    "datejs": "^1.0.0-rc3",
     "express": "~3.5.1",
-    "nedb": "~0.10.4",
-    "rsvp": "~3.0.6",
     "i": "~0.3.2",
     "lodash": "~2.4.1",
-    "mongoose": "~3.8.14",
-    "moment": "~2.6.0"
+    "mkdirp": "~0.3.5",
+    "moment": "~2.8.4",
+    "mongoose": "~3.8.21",
+    "nedb": "~0.10.4",
+    "qs": "^2.3.3",
+    "rsvp": "~3.0.6",
+    "sift": "^0.2.3",
+    "socket.io": "^1.2.1",
+    "validate.js": "~0.7.1",
+    "when": "^3.7.3"
   },
   "devDependencies": {
     "fortune-mongodb": "git://github.com/flyvictor/fortune-mongodb.git#v1.1.5",
@@ -27,10 +33,12 @@
     "mocha": "~1.19.0",
     "should": "~2.0.2",
     "sinon": "^1.10.3",
+    "socket.io-client": "^1.2.1",
     "supertest": "~0.8.0"
   },
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha --recursive -R spec"
+    "test": "node_modules/mocha/bin/mocha --recursive -R spec",
+    "coverage": "istanbul cover --dir ./reports _mocha -- "
   },
   "engines": {
     "node": ">=0.10"

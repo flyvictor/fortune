@@ -16,7 +16,7 @@ var hooks = {};
       return function(req, res){
         res.setHeader(hookOptions.option, '1');
 
-        if (req.query['fail' + type]) {          
+        if (req.query['fail' + type]) {
           console.log('Failing hook',type);
           _.defer(function() {
             res.send(321);
@@ -25,9 +25,9 @@ var hooks = {};
             return false;
           else
             return new RSVP.Promise(function(resolve) { resolve(false); });
-        } 
-        
-        return this;      
+        }
+
+        return this;
       };
     }
   }]
@@ -40,7 +40,7 @@ var Hook = function(hookConfig, fortuneConfig){
   }
 };
 
-module.exports = function(options, port) {
+module.exports = function(options, port, ioPort) {
   var app = fortune(options);
 
   app.inflect.inflections.plural("MOT", "MOT");
@@ -66,8 +66,8 @@ module.exports = function(options, port) {
     }
   }]);
 
-  
-  return app.beforeAll(hooks.beforeAll)
+
+  app.beforeAll(hooks.beforeAll)
     .beforeAllRead(hooks.beforeAllRead)
     .beforeAllWrite(hooks.beforeAllWrite)
     .afterAll(hooks.afterAll)
@@ -92,8 +92,15 @@ module.exports = function(options, port) {
       nested: {
         field1: String,
         field2: String
-      }
+      },
+      nestedArray: [{
+        nestedField1: String,
+        nestedField2: Number
+      }],
+      upsertTest : String,
+      _tenantId: String
     }, {
+      upsertKeys: ["upsertTest"],
       model: {pk:"email"},
       hooks: {
         beforeAll:{
@@ -106,6 +113,11 @@ module.exports = function(options, port) {
           header: 'afterReadPerson',
           value: 'ok'
         }
+      },
+      actions: {
+        'reset-password': require('./testing-actions').peopleResetPassword,
+        'send-through': require('./testing-actions').genericSendThrough,
+        'aggregate-by-birthday' : require('./testing-actions').genericAction
       }
     })
     .beforeRead([{
@@ -146,7 +158,8 @@ module.exports = function(options, port) {
     .resource('pet', {
       name: String,
       appearances: Number,
-      owner: {ref:'person', inverse: 'pets', type: String}
+      owner: {ref:'person', inverse: 'pets', type: String},
+      _tenantId: String
     })
 
     .resource('address', {
@@ -173,7 +186,6 @@ module.exports = function(options, port) {
       }
     })
 
-
     .before('person', function(req, res){
       this.password = Math.random();
       this.official = 'Mr. ' + this.name;
@@ -196,6 +208,10 @@ module.exports = function(options, port) {
         value: 'ok'
       },
       init: Hook
+    }])
+    .beforeRW([{
+      name: 'filtered-out',
+      init:function(){return function(){throw new Error("This hook should not run")}}
     }])
     .beforeRead('house', [{
       name: 'div5',
@@ -262,6 +278,26 @@ module.exports = function(options, port) {
       return this;
     })
 
+    .beforeResponseSend('person', [{
+      name: 'before-response',
+      init: function(options){
+        return function(req, res){
+          var body = this;
+          if (req.headers['apply-before-response-send']){
+            req.headers['apply-before-response-send']++;
+            return _.extend(body, {hookCallCount: req.headers['apply-before-response-send'] - 1});
+          }
+          if (req.headers['overwrite-response-status-code']){
+            return {
+              body: body,
+              statusCode: req.headers['overwrite-response-status-code']
+            }
+          }
+          return body;
+        }
+      }
+    }])
+
     .afterRW('person',[{
       name: 'secondLegacyAfter',
       init: function() {
@@ -271,7 +307,64 @@ module.exports = function(options, port) {
         };
       }
     }])
-    .listen(port);
+    .listen(port)
+    .ioListen(ioPort);
+
+  app.addHookFilter(function(hooks, resourceName, when, type, resource){
+    return _.filter(hooks, function(h){
+      return h.name !== 'filtered-out';
+    });
+  });
+
+  app.addResourcesFilter(function(resources, req){
+    var hiddenResources = req.get('hide-resources') && req.get('hide-resources').split(',');
+    if (!hiddenResources) return resources;
+    return _.filter(resources, function(obj){
+      return hiddenResources.indexOf(obj.name) === -1;
+    })
+  });
+
+  app.addMetadataProvider({
+    key: 'ping',
+    init: function(){
+      return function(req, res){
+        return 'pong';
+      }
+    }
+  });
+
+  app.addMetadataProvider({
+    key: 'sync',
+    init: function(){return function(){return 'sync'}}
+  });
+
+  app.addMetadataProvider({
+    key: 'async',
+    init: function(){
+      return function(){
+        return new RSVP.Promise(function(resolve){
+          setImmediate(function(){
+            resolve('async');
+          });
+        });
+      }
+    }
+  });
+
+  app.addMetadataProvider({
+    key: 'sins',
+    init: function(){
+      return function(req, res){
+        var resource = req.path.split('/')[1];
+        if (resource !== 'people') return [];
+        return _.map(this[resource], function(item){
+          return item.name + ' is a sinner';
+        });
+      }
+    }
+  });
+
+  return app;
 };
 
 

@@ -4,7 +4,7 @@ var _ = require('lodash');
 var RSVP = require('rsvp');
 var request = require('supertest');
 var Promise = RSVP.Promise;
-var fixtures = require('../fixtures.json');
+var fortune = require('../../lib/fortune.js')
 
 module.exports = function(options){
 
@@ -18,6 +18,7 @@ describe('Fortune', function () {
   });
 
 
+  require('./actions')(options);
   require('./routing')(options);
   require('./associations')(options);
   require('./fields_and_filters')(options);
@@ -29,6 +30,12 @@ describe('Fortune', function () {
   require('./plugins')(options);
   require('./linking_booster')(options);
   require('./non-destructive-deletes')(options);
+  require('./should-upsert')(options);
+  require('./validation')(options);
+  require('./resources')(options);
+  require('./multitenant-integration')(options);
+  require('./meta-providers')(options);
+  require('./instrumentor')(options);
 
   describe("Business key", function(){
     it("can be used as primary key for individual resource requests", function(done){
@@ -55,6 +62,21 @@ describe('Fortune', function () {
     });
   });
 
-});
+  describe("Init", function() {
+    it("should pass 'debug' option to underlying adapter", function(done) {
+      var remoteDB = process.env.WERCKER_MONGODB_URL ? process.env.WERCKER_MONGODB_URL + '/fortune' : null;
+      var app = fortune({
+        adapter: 'mongodb',
+        debug: true,
+        connectionString: remoteDB || "mongodb://localhost/fortune_test",
+        inflect: true,
+        enableWebsockets: true
+      });
 
+      app.adapter.mongoose.options.debug.should.equal(true);
+      app.adapter.mongoose.options.debug = false; // Set the global variable back to not log all requests in test env
+      done();
+    });
+  });
+});
 };

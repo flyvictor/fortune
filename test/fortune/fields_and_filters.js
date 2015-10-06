@@ -6,15 +6,20 @@ var request = require('supertest');
 var Promise = RSVP.Promise;
 var fixtures = require('../fixtures.json');
 var neighbourhood = require('../neighbourhood');
+var sinon = require('sinon');
 
 module.exports = function(options){
   describe('fields and filters', function(){
-    var app, baseUrl, ids, adapter;
+    var app, baseUrl, ids, adapter, clock;
     beforeEach(function(){
       app = options.app;
       baseUrl = options.baseUrl;
       ids = options.ids;
       adapter = options.app.adapter;
+    });
+
+    afterEach(function () {
+      if(clock) clock.restore();
     });
 
     describe("patching nested objects", function() {
@@ -140,6 +145,87 @@ module.exports = function(options){
 
             body.cars.length.should.be.equal(1);
             body.cars[0].id.should.be.equal('XYZ890');
+            done();
+          });
+      });
+      it("should allow top-level resource filtering based on Date string", function(done) {
+        request(baseUrl).get('/people?filter[birthday][gte]=1995-01-01')
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            should.exist(body.people);
+            (body.people.length).should.eql(3);
+            done();
+          });
+      });
+      it("should return correct error if date is not recognized", function(done) {
+        request(baseUrl).get('/people?filter[birthday]=time of big bang')
+          .expect(400)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            body.should.eql({
+              error: 'Request was malformed.',
+              detail: 'CastError: Cast to date failed for value "time of big bang" at path "birthday"'
+            });
+            done();
+          });
+      });
+      it("should allow resource filtering based on wordy dates, like 'today', 'yesterday', 'tomorrow', etc", function(done) {
+        clock = sinon.useFakeTimers(new Date(2000, 00, 02).getTime());
+        request(baseUrl).get('/people?filter[birthday]=yesterday')
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            should.exist(body.people);
+            (body.people.length).should.eql(1);
+            done();
+          });
+      });
+      it("should allow resource filtering based on wordy dates, like 'today', 'yesterday', 'tomorrow', etc used along with $gte, $lte", function(done) {
+        clock = sinon.useFakeTimers(new Date(2000, 00, 02).getTime());
+        request(baseUrl).get('/people?filter[birthday][gte]=yesterday')
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            should.exist(body.people);
+            (body.people.length).should.eql(1);
+            done();
+          });
+      });
+      it("should return correct error if date is not recognized inside of complex filter with $gte, $lte", function(done) {
+        request(baseUrl).get('/people?filter[birthday][gte]=time of big bang')
+          .expect(400)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            body.should.eql({
+              error: 'Request was malformed.',
+              detail: 'CastError: Cast to date failed for value "time of big bang" at path "birthday"'
+            });
+            done();
+          });
+      });
+      it("should correctly accept $exists: true", function(done) {
+        request(baseUrl).get('/people?filter[birthday][$exists]=tRue')
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            (body.people).length.should.eql(4);
+            done();
+          });
+      });
+      it("should correctly accept $exists: false", function(done) {
+        request(baseUrl).get('/people?filter[birthday][$exists]=faLse')
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            (body.people).length.should.eql(0);
             done();
           });
       });
@@ -576,7 +662,6 @@ module.exports = function(options){
           .end(function(err, res){
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            // console.log(body);
             _.pluck(body.people, "name").should.eql(["Dilbert", "Robert", "Sally", "Wally"]);
             done();
           });
@@ -588,7 +673,6 @@ module.exports = function(options){
           .end(function(err, res){
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            // console.log(body);
             _.pluck(body.people, "name").should.eql(["Wally", "Sally", "Robert", "Dilbert"]);
             done();
           });
@@ -600,7 +684,6 @@ module.exports = function(options){
           .end(function(err, res){
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            // console.log(body);
             _.pluck(body.people, "name").should.eql(["Sally", "Robert", "Wally", "Dilbert"]);
             done();
           });
@@ -614,7 +697,6 @@ module.exports = function(options){
           .end(function(err, res){
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            // console.log(body);
             (body.people.length).should.equal(2);
             _.pluck(body.people, "name").should.eql(["Dilbert", "Robert"]);
             done();
@@ -627,9 +709,45 @@ module.exports = function(options){
           .end(function(err, res){
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            // console.log(body);
             (body.people.length).should.equal(2);
             _.pluck(body.people, "name").should.eql(["Sally", "Wally"]);
+            done();
+          });
+      });
+    });
+    describe('counting', function() {
+      it('should not return any counts if not requested', function(done) {
+        request(baseUrl).get('/people?sort=name&page=2&pageSize=2')
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            should.not.exist(body.meta);
+            done();
+          });
+      });
+      it('should return total count in if meta requested', function(done) {
+        request(baseUrl).get('/people?sort=name&page=2&pageSize=2&includeMeta=true')
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            should.exist(body.meta);
+            should.exist(body.meta.count);
+            (body.meta.count).should.eql(4);
+            done();
+          });
+      });
+      it('should return filter total count in if meta requested and any filter used', function(done) {
+        request(baseUrl).get('/people?sort=name&page=2&pageSize=2&includeMeta=true&filter[birthday][gte]=1995-01-01')
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            should.exist(body.meta);
+            should.exist(body.meta.count);
+            (body.meta.count).should.eql(4);
+            (body.meta.filterCount).should.eql(3);
             done();
           });
       });
