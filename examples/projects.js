@@ -7,8 +7,11 @@ var fortune = require('../lib/fortune');
  */
 fortune({
 
-  adapter: "mongodb",
-  db: 'projects'
+  adapter: "neo4j",
+  connectionString : "http://localhost:7474",
+  // adapter: "mongodb",
+  db: 'projects',
+
 
 })
 
