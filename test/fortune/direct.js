@@ -57,8 +57,6 @@ module.exports = function(options){
       }).then(function(res){
         res.body.people.length.should.be.equal(0);
         done();
-      }).catch(function(err){
-        done(err);
       });
     });
 
