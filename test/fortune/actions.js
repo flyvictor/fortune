@@ -70,7 +70,7 @@ module.exports = function(options){
         });
     });
     it('should send returned document from custom action complying to jsonapi syntax', function(done){
-      request(baseUrl).post('/people/' + ids.people[0] + '/send-through')
+      request(baseUrl).get('/people/' + ids.people[0] + '/send-through')
         .expect(200)
         .end(function(err, res){
           should.not.exist(err);
@@ -82,7 +82,7 @@ module.exports = function(options){
         });
     });
     it('should be able to run action on many resources ', function(done){
-      request(baseUrl).post('/people/' + ids.people.join(',') + '/send-through')
+      request(baseUrl).get('/people/' + ids.people.join(',') + '/send-through')
         .expect(200)
         .end(function(err, res){
           should.not.exist(err);
@@ -92,6 +92,16 @@ module.exports = function(options){
           done();
         });
     });
+
+    it('should not be able run action if mnethod is not allowed', function(done){
+      request(baseUrl).post('/people/' + ids.people[0] + '/send-through')
+      .end(function(err, res){
+        should.not.exist(err);
+        res.statusCode.should.equal(405);
+        done();
+      });
+    });
+
     it('should be able to run action generic action', function(done) {
       request(baseUrl).post('/people/action/aggregate-by-birthday')
         .expect(200)
