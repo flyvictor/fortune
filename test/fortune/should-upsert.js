@@ -68,7 +68,7 @@ module.exports = function(options){
       }).then(function(count){
         count.should.equal(1);
         done();
-      });
+      })
     });
     it('should not overwrite embedded documents', function(done){
         request(baseUrl).post('/people')
