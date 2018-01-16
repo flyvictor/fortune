@@ -166,15 +166,7 @@ module.exports = function(options){
             referencedModel.modelName = 'pet';
             referencedModel.schema.tree = {};
 
-            var referenceConfig = {
-              inverse: null,
-              isExternal: false,
-              model: 'pet',
-              path: 'pet',
-              singular: true
-            };
-
-            adapter._getInverseReferences.returns([referenceConfig]);
+            adapter._getInverseReferences.returns([]);
 
             adapter._updateRelationships(primaryModel, resourceData, []).then(function(){
               adapter._updateOneToOne.callCount.should.equal(0);
@@ -310,9 +302,9 @@ module.exports = function(options){
         describe('many-to-many', function(){
           it('should generate correct linking tasks with no inverse', function(done){
             primaryModel.modelName = 'person';
-            primaryModel.schema.tree = {pets: [{ref: 'pet', inverse: 'owners'}]};
+            primaryModel.schema.tree = {pets: [{ref: 'pet' }]};
             referencedModel.modelName = 'pet';
-            referencedModel.schema.tree = {owners: [{ref: 'person', inverse: 'pets'}]};
+            referencedModel.schema.tree = {owners: [{ref: 'person' }]};
             adapter._getInverseReferences.returns([]);
             adapter._updateRelationships(primaryModel, resourceData, []).then(function(){
               adapter._updateManyToMany.callCount.should.equal(0);
@@ -384,13 +376,18 @@ module.exports = function(options){
             isExternal: undefined
           }]);
         });
-        it('should skip links that do not provide inverse fields', function(){
+        it('should include links without inverse fields', function(){
           model.schema.tree = {
             pet: {ref: 'pet'},
-            addresses: [{ref: 'address'}],
             spouse: {ref: 'person', inverse: 'spouse'}
           };
           adapter._getAllReferences(model).should.eql([{
+            inverse: undefined,
+            isExternal: undefined,
+            model: 'pet',
+            path: 'pet',
+            singular: true
+          }, {
             path: 'spouse',
             model: 'person',
             singular: true,
