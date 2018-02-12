@@ -98,6 +98,7 @@ module.exports = function(options, port, ioPort) {
       password: String,
       appearances: Number,
       birthday: Date,
+      lastAccess: Date,
       email: {type: String},
       pets: [{ref: 'pet', inverse: 'owner'}],
       soulmate: {ref: 'person', inverse: 'soulmate', type: String},
