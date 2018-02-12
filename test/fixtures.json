@@ -4,13 +4,15 @@
       "name": "Dilbert",
       "appearances": 3457,
       "birthday": "1990-01-01",
-      "email": "dilbert@mailbert.com"
+      "email": "dilbert@mailbert.com",
+      "lastAccess": "1995-01-01"
     },
     {
       "name": "Wally",
       "appearances": 1934,
       "birthday": "1995-01-01",
-      "email": "wally@mailbert.com"
+      "email": "wally@mailbert.com",
+      "lastAccess": null
     },
     {
       "name": "Robert",

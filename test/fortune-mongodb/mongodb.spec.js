@@ -691,6 +691,17 @@ module.exports = function(options){
             (docs.length).should.equal(3);
           });
       });
+      it('should be able to filter date null', function(){
+        var query = {
+          lastAccess: {
+            $ne: null
+          }
+        };
+        return adapter.findMany('person', query)
+          .then(function(docs){
+            (docs.length).should.equal(1);
+          });
+      });
       it('should be able to filter number range: exclusive', function(){
         var query = {
           appearances: {
