@@ -560,7 +560,6 @@ module.exports = function(options){
         });
         it('should return all existing fields when no select is specified', function(){
           return adapter.findMany('person').then(function(docs){
-            
             var expected = 10;
 
             if( docs[0]._internal ) expected++;
