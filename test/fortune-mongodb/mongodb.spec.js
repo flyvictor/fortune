@@ -563,6 +563,7 @@ module.exports = function(options){
             var expected = 10;
 
             if( docs[0]._internal ) expected++;
+            if( docs[0].lastAccess ) expected++;
 
             //hooks add their black magic here.
             //See what you have in fixtures + what beforeWrite hooks assign in addiction
@@ -636,6 +637,7 @@ module.exports = function(options){
               var expected = 11;
 
               if( doc._internal ) expected++;
+              if( doc.lastAccess ) expected++;
               Object.keys( doc ).length.should.equal( expected );
               done();
             });
