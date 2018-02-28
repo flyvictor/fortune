@@ -1,6 +1,6 @@
-box: wercker/nodejs
+box: node:8.9.4
 services:
-    - wercker/mongodb
+  - id: mongo
 no-response-timeout: 15
 build:
   steps:
