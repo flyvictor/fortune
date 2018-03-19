@@ -302,6 +302,30 @@ module.exports = function(options){
       });
     });
 
+    describe('simple compound', function(){
+      it.only('should pass', function(done){
+        var docs = {
+          as: [{name: 'a', links: {
+            first: ['1']
+          }}],
+          linked: {
+            bs: [{
+              id: '1'
+            }]
+          }
+        };
+
+        request(baseUrl).post("/as")
+          .set('content-type', 'application/json')
+          .send(JSON.stringify(docs))
+          .expect(201)
+          .end(function(err){
+            should.not.exist(err);
+            done();
+          });
+      });
+    });
+
     describe("Compound document creation", function(){
       var pets = {};
       beforeEach(function(done){
