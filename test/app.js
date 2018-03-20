@@ -92,14 +92,6 @@ module.exports = function(options, port, ioPort) {
         }
       }
     }])
-    .resource('a', {
-      name: String,
-      first: [{ref: 'b', inverse: 'as'}],
-      second: {ref: 'b'}
-    })
-    .resource('b', {
-      as: {ref: 'a', inverse: 'first'}
-    })
     .resource('person', {
       name: String,
       official: String,

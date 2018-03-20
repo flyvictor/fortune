@@ -302,30 +302,6 @@ module.exports = function(options){
       });
     });
 
-    describe('simple compound', function(){
-      it.only('should pass', function(done){
-        var docs = {
-          as: [{name: 'a', links: {
-            first: ['1']
-          }}],
-          linked: {
-            bs: [{
-              id: '1'
-            }]
-          }
-        };
-
-        request(baseUrl).post("/as")
-          .set('content-type', 'application/json')
-          .send(JSON.stringify(docs))
-          .expect(201)
-          .end(function(err){
-            should.not.exist(err);
-            done();
-          });
-      });
-    });
-
     describe("Compound document creation", function(){
       var pets = {};
       beforeEach(function(done){
@@ -441,10 +417,14 @@ module.exports = function(options){
           .send(JSON.stringify({
             people: [{
               email: "posted@post.com",
-              name: "posted"
+              name: "posted",
+              links: {
+                pets: ['1']
+              }
             }],
             linked: {
               pets: [{
+                id: '1',
                 name: "fluffy"
               }]
             }
@@ -574,10 +554,14 @@ module.exports = function(options){
           .send(JSON.stringify({
             people: [{
               email: "bifur@dwarf.com",
-              name: "Bifur"
+              name: "Bifur",
+              links: {
+                pets: [1]
+              }
             }],
             linked: {
               pets: [{
+                id: 1,
                 name: "a pet"
               }]
             }
