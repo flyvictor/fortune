@@ -391,6 +391,36 @@ module.exports = function(options){
             done();
           });
       });
+      it('should create single resource referenced twice', function(done){
+        var data = {
+          people: [{
+            email: 'testing@test.com',
+            pets: [1],
+            bestPet: 1
+          }],
+          linked: {
+            pets: [{
+              id: 1,
+              nickname: 'Ratbert'
+            }]
+          }
+        };
+
+        request(baseUrl).post("/people")
+          .set('content-type', 'application/json')
+          .send(JSON.stringify(data))
+          .expect(201)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            console.log(body);
+            var person = body.people[0];
+            person.links.pets[0].should.equal(person.links.bestPet);
+
+            body.linked.pets.length.should.equal(1);
+            done();
+          });
+      });
       it("should not attempt to create linked external resources", function(done){
         request(baseUrl).post("/cars")
           .set("content-type", "application/json")

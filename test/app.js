@@ -101,6 +101,7 @@ module.exports = function(options, port, ioPort) {
       lastAccess: Date,
       email: {type: String},
       pets: [{ref: 'pet', inverse: 'owner'}],
+      bestPet: {ref: 'pet'},
       soulmate: {ref: 'person', inverse: 'soulmate', type: String},
       lovers: [{ref: 'person', inverse: 'lovers', type: String}],
       externalResources: [{ ref: "externalResourceReference", type: String, external: true }],
