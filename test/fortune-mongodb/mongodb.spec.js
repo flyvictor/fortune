@@ -560,17 +560,15 @@ module.exports = function(options){
         });
         it('should return all existing fields when no select is specified', function(){
           return adapter.findMany('person').then(function(docs){
-            var expected = 10;
+            docs.forEach(function(doc){
+              var expected = 10;
 
-            if( docs[0]._internal ) expected++;
-            if( docs[0].lastAccess ) expected++;
+              if( _.has(doc, '_internal') ) expected++;
+              if( _.has(doc, 'lastAccess') ) expected++;
+              var keysLen = Object.keys(doc).length;
 
-            //hooks add their black magic here.
-            //See what you have in fixtures + what beforeWrite hooks assign in addiction
-            var keysLen = _.max(_.map(docs, function(doc) {
-              return Object.keys(docs[0]).length;
-            }));
-            (keysLen).should.equal( expected );
+              (keysLen).should.equal( expected );
+            });
           });
         });
         it('should not affect business id selection', function(){

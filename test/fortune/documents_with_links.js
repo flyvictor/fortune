@@ -273,9 +273,13 @@ module.exports = function(options){
         var puppet = {
           pets: [{
             name: 'fluffy',
+            links: {
+              owner: 1
+            }
           }],
           linked: {
             people: [{
+              id: 1,
               name: 'fluffy owner',
               email: 'who cares?'
             }]
