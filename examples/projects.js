@@ -7,8 +7,9 @@ var fortune = require('../lib/fortune');
  */
 fortune({
 
-  adapter: "mongodb",
-  db: 'projects'
+  adapter: "neo4jdb",
+  db: 'projects',
+  debug:true
 
 })
 
