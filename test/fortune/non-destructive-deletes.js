@@ -302,6 +302,25 @@ module.exports = function(options){
         });
       });
     });
+    it('should return resource if deletedAt=null', function(done){
+      request(baseUrl)
+        .patch('/people/' + ids.people[0])
+        .set('content-type', 'application/json')
+        .send(JSON.stringify([{op: 'replace', path: '/people/0/deletedAt', value: null }]))
+        .end(function(err, res){
+        should.not.exist(err);
+        request(baseUrl).get('/people').end(function(err, res){
+          var body = JSON.parse(res.text);
+          var obj = _.find(body.people, function(p){return p.id === ids.people[0]});
+          should.exist(obj);
+          request(baseUrl).get('/people/' + ids.people[0]).end(function(err, res){
+            var body = JSON.parse(res.text);
+            should.exist(body.people[0]);
+            done();
+          });
+        });
+      });
+    });
 
     it('should not return deleted item with /:resource/:id/:linked response', function(done){
       request(baseUrl).patch('/people/' + ids.people[0]).set('content-type', 'application/json')
