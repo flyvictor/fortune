@@ -68,6 +68,8 @@ module.exports = function(options){
       }).then(function(count){
         count.should.equal(1);
         done();
+      }).catch(err => {
+        done(err)
       })
     });
     it('should not overwrite embedded documents', function(done){
