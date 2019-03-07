@@ -33,7 +33,8 @@ describe('Fortune test runner', function(){
       flags: {
         config: {
           autoIndex: true
-        }
+        },
+        useNewUrlParser: true
       }
     }, port, ioPort);
 
@@ -47,7 +48,7 @@ describe('Fortune test runner', function(){
             if(name && name !== "system"){
               return new RSVP.Promise(function(resolve){
                 app.adapter.mongoose.connections[1].db.collection(name, function(err, collection){
-                  collection.remove({},null, function(){
+                  collection.deleteMany({},null, function(){
                     console.log("Wiped collection", name);
                     resolve();
                   });

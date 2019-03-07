@@ -398,7 +398,7 @@ module.exports = function(options){
       });
       describe('synchronizing many-to-many', function(){
         it('should keep in sync many-to-many relationship', function(){
-          return adapter.update('person', ids.people[0], {$pushAll: {houses: [ids.houses[0]]}})
+          return adapter.update('person', adapter.preupdate('person', ids.people[0]), {$pushAll: {houses: [ids.houses[0]]}})
             .then(function(created){
               (created.links.houses[0].toString()).should.equal(ids.houses[0].toString());
             }).then(function(){
@@ -413,7 +413,7 @@ module.exports = function(options){
               houses: ids.houses
             }
           };
-          return adapter.update('person', ids.people[0], upd)
+          return adapter.update('person', adapter.preupdate('person', ids.people[0]), upd)
 
             //Prove successful initial association
             .then(function(updated){
@@ -428,12 +428,12 @@ module.exports = function(options){
             .then(function(found){
               (found.length).should.equal(4);
               //Do some other updates to mix docs in Mongo
-              return adapter.update('person', ids.people[1], {$push: {houses: ids.houses[0]}});
+              return adapter.update('person', adapter.preupdate('person', ids.people[1]), {$push: {houses: ids.houses[0]}});
             })
 
             //Kick him out the house
             .then(function(){
-              return adapter.update('person', ids.people[0], {$pull: {houses: ids.houses[0]}});
+              return adapter.update('person', adapter.preupdate('person', ids.people[0]), {$pull: {houses: ids.houses[0]}});
             })
 
             //Then assert related docs sync
@@ -494,7 +494,7 @@ module.exports = function(options){
           adapter._updateManyToOne = function(){
             mockCalled = true;
           };
-          return adapter.update('person', ids.people[0], {$set: {name: 'Filbert'}}).then(function(){
+          return adapter.update('person', adapter.preupdate('person', ids.people[0]), {$set: {name: 'Filbert'}}).then(function(){
             mockCalled.should.equal(false);
             adapter._updateOneToOne = oto;
             adapter._updateOneToMany = otm;
@@ -509,7 +509,7 @@ module.exports = function(options){
             mockCalled = true;
             return oto.apply(null, arguments);
           };
-          return adapter.update('person', ids.people[0], {$set: {soulmate: ids.people[1]}}).then(function(){
+          return adapter.update('person', adapter.preupdate('person', ids.people[0]), {$set: {soulmate: ids.people[1]}}).then(function(){
             mockCalled.should.equal(true);
             adapter._updateOneToOne = oto;
           });
@@ -588,12 +588,12 @@ module.exports = function(options){
       });
       describe('find', function(){
         beforeEach(function(done){
-          adapter.update('person', ids.people[0], {$push: {pets: ids.pets[0]}})
+          adapter.update('person', adapter.preupdate('person', ids.people[0]), {$push: {pets: ids.pets[0]}})
             .then(function(){
-              return adapter.update('person', ids.people[0], {$set: {soulmate: ids.people[1]}})
+              return adapter.update('person', adapter.preupdate('person', ids.people[0]), {$set: {soulmate: ids.people[1]}})
             })
             .then(function(){
-              return adapter.update('person', ids.people[0], {$push: {houses: ids.houses[0]}})
+              return adapter.update('person', adapter.preupdate('person', ids.people[0]), {$push: {houses: ids.houses[0]}})
             })
             .then(function(){
               done();

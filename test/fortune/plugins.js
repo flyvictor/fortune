@@ -211,24 +211,26 @@ module.exports = function(options){
           });
       });
       it('should inform users when a resource is deleted', function(done) {
-        socket.on('delete', function(data) {
-          data.people.should.be.an.Array;
-          data.people.length.should.equal(1);
-          data.people[0].id.should.equal('test@test.com');
-          done();
-        });
-        request(baseUrl).post('/people')
-          .set('content-type', 'application/json')
-          .send(JSON.stringify({
-            people: [{
-              email: 'test@test.com'
-            }]
-          }))
-          .end(function(err, res){
-            request(baseUrl).del('/people/test@test.com')
-              .end(function(err, res) {
-            });
+        setTimeout(function () { //waiting previous delete messages are sent
+          socket.on('delete', function(data) {
+            data.people.should.be.an.Array;
+            data.people.length.should.equal(1);
+            data.people[0].id.should.equal('test@test.com');
+            done();
           });
+          request(baseUrl).post('/people')
+            .set('content-type', 'application/json')
+            .send(JSON.stringify({
+              people: [{
+                email: 'test@test.com'
+              }]
+            }))
+            .end(function(err, res){
+              request(baseUrl).del('/people/test@test.com')
+                .end(function(err, res) {
+                });
+            });
+        }, 500)
       });
 
       it('should properly serialize the data', function(done){
