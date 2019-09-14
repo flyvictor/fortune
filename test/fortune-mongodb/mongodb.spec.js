@@ -632,7 +632,7 @@ module.exports = function(options){
               //hooks add their black magic here.
               //See what you have in fixtures + what beforeWrite hooks assign in addiction
               //+ soulmate from before each
-              var expected = 11;
+              var expected = 12;
 
               if( doc._internal ) expected++;
               if( doc.lastAccess ) expected++;
