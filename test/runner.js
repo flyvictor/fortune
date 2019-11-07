@@ -6,14 +6,12 @@ var request = require('supertest');
 var Promise = RSVP.Promise;
 var fixtures = require('./fixtures.json');
 var port = 8891;
-var ioPort = 8892;
 var baseUrl = 'http://localhost:' + port;
 process.env.DISASTER_RECOVERY_COUNT_ENABLED = 'true';
 describe('Fortune test runner', function(){
   var options = {
     app: null,
     port: port,
-    ioPort: ioPort,
     baseUrl: baseUrl,
     ids: {}
   };
@@ -29,14 +27,13 @@ describe('Fortune test runner', function(){
       adapter: "mongodb",
       connectionString: remoteDB || "mongodb://localhost/fortune_test",
       inflect: true,
-      enableWebsockets: true,
       flags: {
         config: {
           autoIndex: true
         },
         useNewUrlParser: true
       }
-    }, port, ioPort);
+    }, port);
 
     var app = options.app;
     options.app.adapter.awaitConnection().then(function(){

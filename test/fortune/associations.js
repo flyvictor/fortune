@@ -373,8 +373,8 @@ module.exports = function(options){
             .end(function(err, res){
               should.not.exist(err);
               var body = JSON.parse(res.text);
-              var first = _.findWhere(body.people, {id: ids.people[0]});
-              var second = _.findWhere(body.people, {id: ids.people[1]});
+              var first = _.find(body.people, {id: ids.people[0]});
+              var second = _.find(body.people, {id: ids.people[1]});
               should.exist(first.links.cars);
               (first.links.cars.length).should.equal(1);
               (first.links.cars[0]).should.equal(ids.cars[1]);
@@ -418,8 +418,8 @@ module.exports = function(options){
               .end(function(err, res){
                 should.not.exist(err);
                 var body = JSON.parse(res.text);
-                var first = _.findWhere(body.people, {id: ids.people[0]});
-                var second = _.findWhere(body.people, {id: ids.people[1]});
+                var first = _.find(body.people, {id: ids.people[0]});
+                var second = _.find(body.people, {id: ids.people[1]});
                 should.not.exist(first.links);
                 should.exist(second.links.cars);
                 (second.links.cars[0]).should.equal(ids.cars[0]);

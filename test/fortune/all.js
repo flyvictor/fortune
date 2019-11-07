@@ -71,8 +71,7 @@ describe('Fortune', function () {
         adapter: 'mongodb',
         debug: true,
         connectionString: remoteDB || "mongodb://localhost/fortune_test",
-        inflect: true,
-        enableWebsockets: true
+        inflect: true
       });
 
       app.adapter.mongoose.options.debug.should.equal(true);

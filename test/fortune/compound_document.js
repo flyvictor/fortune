@@ -188,7 +188,7 @@ module.exports = function(options){
         request(baseUrl).get('/addresses').end(function(err, res){
           should.not.exist(err);
           var body = JSON.parse(res.text);
-          resolve(RSVP.all(_.map(_.rest(body.addresses), function(addr){
+          resolve(RSVP.all(_.map(_.tail(body.addresses), function(addr){
             return linkAddress(ids.people[0], addr.id);
           })));
         });
@@ -348,11 +348,11 @@ module.exports = function(options){
           .end(function(err, res){
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            var dwalin = _.findWhere(body.people, {name: "Dwalin"});
+            var dwalin = _.find(body.people, {name: "Dwalin"});
             (dwalin.links.pets.length).should.equal(2);
             (dwalin.links.pets.indexOf(pets.Lumpy)).should.not.equal(-1);
             (dwalin.links.pets.indexOf(pets.Cuddles)).should.not.equal(-1);
-            var balin = _.findWhere(body.people, {name: "Balin"});
+            var balin = _.find(body.people, {name: "Balin"});
             (balin.links.pets.length).should.equal(1);
             (balin.links.pets.indexOf(pets.Toothy)).should.not.equal(-1);
             done();
@@ -364,9 +364,9 @@ module.exports = function(options){
           .end(function(err, res){
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            (_.findWhere(body.pets, {name: "Lumpy"}).links.owner).should.equal("dwalin@dwarf.com");
-            (_.findWhere(body.pets, {name: "Cuddles"}).links.owner).should.equal("dwalin@dwarf.com");
-            (_.findWhere(body.pets, {name: "Toothy"}).links.owner).should.equal("balin@dwarf.com");
+            (_.find(body.pets, {name: "Lumpy"}).links.owner).should.equal("dwalin@dwarf.com");
+            (_.find(body.pets, {name: "Cuddles"}).links.owner).should.equal("dwalin@dwarf.com");
+            (_.find(body.pets, {name: "Toothy"}).links.owner).should.equal("balin@dwarf.com");
             done();
           });
       });
@@ -541,8 +541,8 @@ module.exports = function(options){
             (body.people[0].links.estate).should.match(/[-0-9a-f]{24}/);
             var shackId = body.people[0].links.houses[0];
             var mansionId = body.people[0].links.estate;
-            var shack = _.findWhere(body.linked.houses, {address: "shack"});
-            var mansion = _.findWhere(body.linked.houses, {address: "mansion"});
+            var shack = _.find(body.linked.houses, {address: "shack"});
+            var mansion = _.find(body.linked.houses, {address: "mansion"});
             (shack.id).should.equal(shackId);
             (mansion.id).should.equal(mansionId);
             done();

@@ -588,8 +588,8 @@ module.exports = function(options){
               should.not.exist(err);
               var body = JSON.parse(res.text);
               (body.cars.length).should.equal(2);
-              var one = _.findWhere(body.cars, {id: ids.cars[0]});
-              var two = _.findWhere(body.cars, {id: ids.cars[1]});
+              var one = _.find(body.cars, {id: ids.cars[0]});
+              var two = _.find(body.cars, {id: ids.cars[1]});
               should.exist(one);
               should.exist(two);
               done();
@@ -681,7 +681,7 @@ module.exports = function(options){
           .end(function(err, res){
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            _.pluck(body.people, "name").should.eql(["Dilbert", "Robert", "Sally", "Wally"]);
+            _.map(body.people, "name").should.eql(["Dilbert", "Robert", "Sally", "Wally"]);
             done();
           });
       });
@@ -692,7 +692,7 @@ module.exports = function(options){
           .end(function(err, res){
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            _.pluck(body.people, "name").should.eql(["Wally", "Sally", "Robert", "Dilbert"]);
+            _.map(body.people, "name").should.eql(["Wally", "Sally", "Robert", "Dilbert"]);
             done();
           });
       });
@@ -703,7 +703,7 @@ module.exports = function(options){
           .end(function(err, res){
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            _.pluck(body.people, "name").should.eql(["Sally", "Robert", "Wally", "Dilbert"]);
+            _.map(body.people, "name").should.eql(["Sally", "Robert", "Wally", "Dilbert"]);
             done();
           });
       });
@@ -712,7 +712,7 @@ module.exports = function(options){
           .expect(200)
           .end(function(err, res){
             var body = JSON.parse(res.text);
-            _.pluck(body.people, "name").should.eql(["Dilbert", "Wally", "Sally", "Robert"]);
+            _.map(body.people, "name").should.eql(["Dilbert", "Wally", "Sally", "Robert"]);
             done();
           });
       });
@@ -721,7 +721,7 @@ module.exports = function(options){
           .expect(200)
           .end(function(err, res){
             var body = JSON.parse(res.text);
-            _.pluck(body.linked.pets, "name").should.eql(["Ratbert", "Dogbert"]);
+            _.map(body.linked.pets, "name").should.eql(["Ratbert", "Dogbert"]);
             done();
           });
       });
@@ -735,7 +735,7 @@ module.exports = function(options){
             should.not.exist(err);
             var body = JSON.parse(res.text);
             (body.people.length).should.equal(2);
-            _.pluck(body.people, "name").should.eql(["Dilbert", "Robert"]);
+            _.map(body.people, "name").should.eql(["Dilbert", "Robert"]);
             done();
           });
       });
@@ -747,7 +747,7 @@ module.exports = function(options){
             should.not.exist(err);
             var body = JSON.parse(res.text);
             (body.people.length).should.equal(2);
-            _.pluck(body.people, "name").should.eql(["Sally", "Wally"]);
+            _.map(body.people, "name").should.eql(["Sally", "Wally"]);
             done();
           });
       });

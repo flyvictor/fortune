@@ -169,7 +169,7 @@ module.exports = function(options){
               should.not.exist(err);
               var body = JSON.parse(res.text);
               body.people[0].nested.should.be.an.Object;
-              body.people[0].nested.should.have.keys(['field1', 'field2']);
+              body.people[0].nested.should.have.keys('field1', 'field2');
               done();
             });
         });
