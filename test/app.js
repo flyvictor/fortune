@@ -40,7 +40,7 @@ var Hook = function(hookConfig, fortuneConfig){
   }
 };
 
-module.exports = function(options, port, ioPort) {
+module.exports = function(options, port) {
   var app = fortune(options);
 
   app.inflect.inflections.plural("MOT", "MOT");
@@ -389,8 +389,7 @@ module.exports = function(options, port, ioPort) {
         }
       }
     }])
-    .listen(port)
-    .ioListen(ioPort);
+    .listen(port);
 
   app.addHookFilter(function(hooks, resourceName, when, type, resource){
     return _.filter(hooks, function(h){

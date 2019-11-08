@@ -12,32 +12,27 @@
     "url": "git@github.com:flyvictor/fortune.git"
   },
   "dependencies": {
-    "body-parser": "^1.14.1",
-    "datejs": "1.0.0-rc3",
-    "express": "4.13.3",
-    "i": "~0.3.2",
-    "lodash": "3.10.1",
+    "body-parser": "1.19.0",
+    "express": "4.17.1",
+    "i": "0.3.6",
+    "lodash": "4.17.15",
     "mkdirp": "0.5.1",
-    "mocha": "^3.0.0",
-    "moment": "2.10.6",
-    "mongoose": "5.4.17",
-    "nedb": "1.4.0",
-    "qs": "5.2.0",
-    "rsvp": "3.1.0",
-    "sift": "3.0.0",
-    "socket.io": "1.3.7",
-    "superagent": "^2.1.0",
-    "supertest": "^2.0.0",
-    "validate.js": "0.9.0",
-    "when": "^3.7.3",
-    "zipkin": "0.11.1"
+    "mocha": "6.2.2",
+    "mongoose": "5.7.8",
+    "nedb": "1.8.0",
+    "qs": "6.9.0",
+    "rsvp": "4.8.5",
+    "sift": "8.5.1",
+    "supertest": "4.0.2",
+    "validate.js": "0.13.1",
+    "when": "3.7.8",
+    "zipkin": "0.19.1"
   },
   "devDependencies": {
     "fortune-mongodb": "git://github.com/flyvictor/fortune-mongodb.git#v1.1.5",
     "istanbul": "0.4.0",
-    "should": "7.1.1",
-    "sinon": "1.17.6",
-    "socket.io-client": "1.3.7"
+    "should": "13.2.3",
+    "sinon": "7.5.0"
   },
   "scripts": {
     "test": "node_modules/mocha/bin/mocha --recursive -R spec --timeout 4000",

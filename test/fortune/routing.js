@@ -27,7 +27,7 @@ module.exports = function(options){
               should.not.exist(error);
               var body = JSON.parse(response.text);
               ids[collection].forEach(function(id) {
-                _.contains(_.pluck(body[collection], 'id'), id).should.equal(true);
+                _.includes(_.map(body[collection], 'id'), id).should.equal(true);
               });
               done();
             });
@@ -296,7 +296,7 @@ module.exports = function(options){
             ]);
           })
           .then(function(ok){
-            _.all(ok).should.equal(true);
+            _.every(ok).should.equal(true);
             done();
           });
       });

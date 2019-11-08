@@ -17,7 +17,7 @@ module.exports = function(options) {
 			app._resources['person'].schema['name'] = {
 				type: app._resources['person'].schema['name'],
 				validation : {
-					presence: true,
+					presence: {allowEmpty: false},
 					exclusion: {
 						within: ["John", "Peter"],
 						message: "'%{value}' is not allowed"
@@ -37,7 +37,7 @@ module.exports = function(options) {
 		it('should add validator to the list', function(done) {
 			app.addValidator('petAge', { numericality : { moreThan : 0, lessThan: 30 } });
 			app.addValidator('noJohns', { exclusion : { within: ["John"] } });
-			app._validators.should.have.keys(['petAge', 'noJohns']);
+			app._validators.should.have.keys('petAge', 'noJohns');
 			done();
 		});
 
@@ -95,7 +95,7 @@ module.exports = function(options) {
 			.set('content-type', 'application/json')
 			.send(JSON.stringify({people: [{ "name": "", "password": "qwerty", "email": "test@example.com"}]}))
 			.end(function(error, response) {
-				response.body.should.have.keys(['error', 'detail']);
+				response.body.should.have.keys('error', 'detail');
 				response.body.detail.should.equal("Error: Validation error: Name can't be blank");
 				done();
 			});
@@ -107,7 +107,7 @@ module.exports = function(options) {
 			.set('content-type', 'application/json')
 			.send(JSON.stringify([{ "path" : "/people/0/name", "op": "replace", "value": "Peter" }]))
 			.end(function(error, response) {
-				response.body.should.have.keys(['error', 'detail']);
+				response.body.should.have.keys('error', 'detail');
 				response.body.detail.should.equal("Error: Validation error: Name 'Peter' is not allowed");
 				done();
 			});

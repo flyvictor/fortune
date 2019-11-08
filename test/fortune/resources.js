@@ -16,9 +16,9 @@ module.exports = function(options){
         .end(function(err, res){
           should.not.exist(err);
           var body = JSON.parse(res.text);
-          body.should.have.keys(['resources']);
+          body.should.have.keys('resources');
           body.resources.length.should.equal(5);
-          var list = _.pluck(body.resources, 'name');
+          var list = _.map(body.resources, 'name');
           list.should.eql(['person', 'house', 'pet', 'address', 'car']);
           done();
         });
@@ -31,7 +31,7 @@ module.exports = function(options){
           should.not.exist(err);
           var body = JSON.parse(res.text);
           body.resources.length.should.equal(3);
-          var list = _.pluck(body.resources, 'name');
+          var list = _.map(body.resources, 'name');
           list.should.eql(['pet','address','car']);
           done();
         });

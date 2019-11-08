@@ -25,7 +25,7 @@ describe('custom-types util', function(){
       beforeEach(function() {
         app = fortune({ adapter: "mongodb" });
         sandbox.stub(app.adapter, "awaitConnection").returns(RSVP.resolve());
-        modelStub = sandbox.stub(app.adapter, "model", function(name, schema) {
+        modelStub = sandbox.stub(app.adapter, "model").callsFake(function(name, schema) {
           if(!schema) return null;
           return {};
         });
@@ -298,8 +298,8 @@ describe('custom-types util', function(){
         });
       });
       afterEach(function(){
-        toDbFormatter.reset();
-        fromDbFormatter.reset();
+        toDbFormatter.resetHistory();
+        fromDbFormatter.resetHistory();
       });
 
       it("should use provided schema underground", function() {

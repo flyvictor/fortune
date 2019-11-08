@@ -14,7 +14,7 @@ module.exports = function(options){
     it("gets a resource collection", function(done){
       app.direct.get("people").then(function(res){
         ids.people.forEach(function(id){
-          _.contains(_.pluck(res.body.people, 'id'), id).should.equal(true);
+          _.includes(_.map(res.body.people, 'id'), id).should.equal(true);
         });
         done();
       });
@@ -23,7 +23,7 @@ module.exports = function(options){
     it("should be compatible with fortuneClient including metadata", function(done){
       app.direct.get("people", {query: {includeMeta: true}}).then(function(res){
         ids.people.forEach(function(id){
-          _.contains(_.pluck(res.body.people, 'id'), id).should.equal(true);
+          _.includes(_.map(res.body.people, 'id'), id).should.equal(true);
         });
         should.exist(res.body.meta);
         done();
@@ -40,7 +40,7 @@ module.exports = function(options){
     it("gets a number of resources by ids", function(done){
       app.direct.get("people", {id:ids.people}).then(function(res){
         _.each(ids.people, function(id){
-          _.contains(_.pluck(res.body.people, "id"),id).should.be.true;
+          _.includes(_.map(res.body.people, "id"),id).should.be.true;
         });
         done();
       });
