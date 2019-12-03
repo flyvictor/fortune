@@ -15,10 +15,10 @@ module.exports = function(){
         helpers.squash('$set', {a: 1, c: 2}, {a: 3, b: 4}).should.eql({a: 3, b: 4, c: 2});
       });
       it('should replace target object value if it is not set yet for $pushAll', function(){
-        helpers.squash('$pushAll', {}, {a: [1]}).should.eql({a: [1]});
+        helpers.squash('$pushAll', {}, {a: [1]}).should.eql({a: {$each: [1]}});
       });
       it('should extend target object value if it is set already for $pushAll', function(){
-        helpers.squash('$pushAll', {a: [1]}, {a: [2]}).should.eql({a: [1,2]});
+        helpers.squash('$pushAll', {a: {$each: [1]}}, {a: [2]}).should.eql({a: {$each: [1,2]}});
       });
     });
     describe('needsPositionalUpdate', function(){
@@ -159,6 +159,7 @@ module.exports = function(){
           match: {},
           separate: false,
           key: '$pushAll',
+          mongoKey: '$push',
           update: {
             array: ['x']
           }
@@ -173,6 +174,7 @@ module.exports = function(){
           match: {},
           separate: false,
           key: '$pushAll',
+          mongoKey: '$push',
           update: {
             array: ['x']
           }
@@ -187,6 +189,7 @@ module.exports = function(){
           match: {},
           separate: false,
           key: '$pushAll',
+          mongoKey: '$push',
           update: {
             field: ['x']
           }
@@ -201,6 +204,7 @@ module.exports = function(){
           match: {'embedded._id': 'sub-doc-id'},
           separate: true,
           key: '$pushAll',
+          mongoKey: '$push',
           update: {
             'embedded.$.field': ['x']
           }
@@ -214,6 +218,7 @@ module.exports = function(){
           match: {},
           separate: false,
           key: '$pushAll',
+          mongoKey: '$push',
           update: {
             embedded: ['x']
           }
@@ -227,6 +232,7 @@ module.exports = function(){
           match: {},
           separate: false,
           key: '$pushAll',
+          mongoKey: '$push',
           update: {
             embedded: ['x']
           }

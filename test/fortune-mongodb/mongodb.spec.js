@@ -398,7 +398,7 @@ module.exports = function(options){
       });
       describe('synchronizing many-to-many', function(){
         it('should keep in sync many-to-many relationship', function(){
-          return adapter.update('person', adapter.preupdate('person', ids.people[0]), {$pushAll: {houses: [ids.houses[0]]}})
+          return adapter.update('person', adapter.preupdate('person', ids.people[0]), {$push: {houses: {$each: [ids.houses[0]]}}})
             .then(function(created){
               (created.links.houses[0].toString()).should.equal(ids.houses[0].toString());
             }).then(function(){
@@ -409,8 +409,8 @@ module.exports = function(options){
         });
         it('should sync correctly when many docs have reference', function(){
           var upd =  {
-            $pushAll: {
-              houses: ids.houses
+            $push: {
+              houses: {$each: ids.houses}
             }
           };
           return adapter.update('person', adapter.preupdate('person', ids.people[0]), upd)
