@@ -172,7 +172,7 @@ module.exports = function(options){
     });
 
   });
-  describe('onResponse hooks', function(){
+  describe('onResponseSend hooks', function(){
     it('should call beforeResponseSend hooks once per request', function(done){
       request(baseUrl).get('/people')
         .set('apply-before-response-send', 1)
@@ -224,6 +224,49 @@ module.exports = function(options){
                   done();
                 });
             })
+        });
+    });
+  });
+
+  describe('onErrorResponseSend hooks', function(){
+    it('should not call beforeErrorResponseSend hooks per successfull request', function(done){
+      request(baseUrl).get('/people')
+        .set('apply-before-error-response-send', 1)
+        .end(function(err, res){
+          should.not.exist(err);
+          var body = JSON.parse(res.text);
+          should.not.exist(body.hookCallCount);
+          done();
+        });
+    });
+    it('should call beforeErrorResponseSend hooks once per error request', function(done){
+      request(baseUrl)
+        .patch("/people/" + ids.people[0])
+        .set('content-type', 'application/json')
+        .set('apply-before-error-response-send', 1)
+        .send(JSON.stringify([
+          {op: 'inc', path: '/people/0/name', value: 'any'}
+        ]))
+        .end(function(err, res){
+          should.not.exist(err);
+          console.log(res.text);
+          var body = JSON.parse(res.text);
+          body.hookCallCount.should.equal(1);
+          done();
+        });
+    });
+    it('should be able to change response status code', function(done){
+      request(baseUrl)
+        .patch("/people/" + ids.people[0])
+        .set('content-type', 'application/json')
+        .set('overwrite-error-response-status-code', 123)
+        .send(JSON.stringify([
+          {op: 'inc', path: '/people/0/name', value: 'any'}
+        ]))
+        .end(function(err, res){
+          should.not.exist(err);
+          res.statusCode.should.equal(123);
+          done();
         });
     });
   });
