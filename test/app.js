@@ -370,6 +370,26 @@ module.exports = function(options, port) {
       }
     }])
 
+    .beforeErrorResponseSend('person', [{
+      name: 'before-error-response',
+      init: function(options){
+        return function(req, res){
+          var body = this;
+          if (req.headers['apply-before-error-response-send']){
+            req.headers['apply-before-error-response-send']++;
+            return _.extend(body, {hookCallCount: req.headers['apply-before-error-response-send'] - 1});
+          }
+          if (req.headers['overwrite-error-response-status-code']){
+            return {
+              body: body,
+              statusCode: req.headers['overwrite-error-response-status-code']
+            }
+          }
+          return body;
+        }
+      }
+    }])
+
     .afterRW('person',[{
       name: 'secondLegacyAfter',
       init: function() {
