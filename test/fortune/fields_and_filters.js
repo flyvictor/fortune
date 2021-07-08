@@ -100,6 +100,19 @@ module.exports = function(options){
           });
       });
 
+      //issue 156
+      it("should not treat top-resource ?fields as linked resource ?fields", function (done) {
+        request(baseUrl).get('/people/' + ids.people[0] + '?include=pets&fields=name').expect('Content-Type', /json/).expect(200).end(function (err, res) {
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            should.not.exist(body.people[0].links);
+            should.exist(body.linked.pets[0]);
+            should.exist(body.people[0].name);
+            should.not.exist(body.people[0].email);
+            done();
+        });
+    });
+
       it("should return specific fields for linked document of single doc", function(done){
         request(baseUrl).get('/people/' + ids.people[0] + '?include=pets&fields[pets]=name')
           .expect('Content-Type', /json/)
