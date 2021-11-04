@@ -201,6 +201,17 @@ module.exports = function(options, port) {
         };
       }
     }])
+    .afterWrite([{
+      name: "throw-error",
+      init: function(){
+        return function(req, res){
+          if (req.headers['throw-after-write-error']) {
+            throw Error('after write error');
+          }
+          return this;
+        };
+      }
+    }])
 
   //Hooks with standard config defined in personHooks.js
     .beforeWrite([personHooks.beforeWrite])
@@ -467,5 +478,3 @@ module.exports = function(options, port) {
 
   return app;
 };
-
-
