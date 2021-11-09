@@ -170,6 +170,18 @@ module.exports = function(options){
             });
         });
     });
+    it("after write hook throws an error on resource creating", function(done) {
+      request(baseUrl).post('/people')
+        .set('content-type', 'application/json')
+        .send(JSON.stringify({people: [
+            {email: 'testing'}
+          ]}))
+        .set('throw-after-write-error', true)
+        .end(function(err, res){
+          res.statusCode.should.equal(500);
+          done();
+        });
+    });
 
   });
   describe('onResponseSend hooks', function(){
