@@ -118,6 +118,7 @@ describe('Fortune test runner', function(){
 
   require('./fortune/all')(options);
   require('./fortune-mongodb/mongodb.spec.js')(options);
+  require('./fortune-mongodb/helpers.spec')();
   require('./querytree')(options);
 
 
