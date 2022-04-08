@@ -586,6 +586,7 @@ module.exports = function(options){
           });
         });
       });
+
       describe('find', function(){
         beforeEach(function(done){
           adapter.update('person', adapter.preupdate('person', ids.people[0]), {$push: {pets: ids.pets[0]}})
