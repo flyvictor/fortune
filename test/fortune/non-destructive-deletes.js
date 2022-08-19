@@ -256,7 +256,7 @@ module.exports = function(options){
               .send(JSON.stringify([
                 {op: 'replace', path: '/people/0/name', value: 'zombie'}
               ]))
-              .expect(404)
+              .expect(410)
               .end(function(err){
                 should.not.exist(err);
                 resolve();
@@ -264,7 +264,7 @@ module.exports = function(options){
           }),
           new Promise(function(resolve){
             request(baseUrl).del('/people/' + ids.people[0])
-              .expect(404)
+              .expect(410)
               .end(function(err){
                 should.not.exist(err);
                 resolve();

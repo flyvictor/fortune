@@ -81,6 +81,32 @@ module.exports = function(options){
         });
     });
 
+    it('should return 403 for a non-permitted doc on deleting', function(done){
+      request(baseUrl)
+        .del('/people/' + ids.people[0])
+        .set('set-fortune-extension', 'born-in-1995')
+        .expect(403)
+        .end(function(err){
+          should.not.exist(err);
+          done();
+        });
+    });
+
+    it('should return 403 for a non-permitted doc on updating', function(done){
+      request(baseUrl)
+        .patch('/people/' + ids.people[0])
+        .set('set-fortune-extension', 'born-in-1995')
+        .set('content-type', 'application/json')
+        .send(JSON.stringify([
+          {op: 'replace', path: '/people/0/lastAccess', value: '1995-01-02'},
+        ]))
+        .expect(403)
+        .end(function(err){
+          should.not.exist(err);
+          done();
+        });
+    });
+
     it('should return 200 for a non-restricted list of docs', function(done){
       request(baseUrl).get('/people/' + ids.people.join(','))
         .expect(200)

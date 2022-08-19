@@ -29,7 +29,7 @@
     "zipkin": "0.19.1"
   },
   "devDependencies": {
-    "fortune-mongodb": "git://github.com/flyvictor/fortune-mongodb.git#v1.1.5",
+    "fortune-mongodb": "git+ssh://github.com/flyvictor/fortune-mongodb.git#v1.1.5",
     "istanbul": "0.4.0",
     "should": "13.2.3",
     "sinon": "7.5.0"
