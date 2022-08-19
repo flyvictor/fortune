@@ -197,10 +197,10 @@ module.exports = function(options){
     });
     it('should be able to change response status code', function(done){
       request(baseUrl).get('/people')
-        .set('overwrite-response-status-code', 123)
+        .set('overwrite-response-status-code', 404)
         .end(function(err, res){
           should.not.exist(err);
-          res.statusCode.should.equal(123);
+          res.statusCode.should.equal(404);
           done();
         });
     });
@@ -271,13 +271,13 @@ module.exports = function(options){
       request(baseUrl)
         .patch("/people/" + ids.people[0])
         .set('content-type', 'application/json')
-        .set('overwrite-error-response-status-code', 123)
+        .set('overwrite-error-response-status-code', 404)
         .send(JSON.stringify([
           {op: 'inc', path: '/people/0/name', value: 'any'}
         ]))
         .end(function(err, res){
           should.not.exist(err);
-          res.statusCode.should.equal(123);
+          res.statusCode.should.equal(404);
           done();
         });
     });
