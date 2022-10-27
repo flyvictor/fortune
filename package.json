@@ -39,6 +39,7 @@
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-prettier": "4.0.0",
     "fortune-mongodb": "git+ssh://github.com/flyvictor/fortune-mongodb.git#v1.1.5",
+    "husky": "4.3.8",
     "istanbul": "0.4.0",
     "lint-staged": "11.1.2",
     "prettier": "2.4.1",
