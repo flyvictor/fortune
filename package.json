@@ -29,17 +29,31 @@
     "zipkin": "0.19.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "13.2.0",
+    "@commitlint/config-conventional": "13.2.0",
+    "commitlint-plugin-function-rules": "1.4.0",
+    "eslint": "7.32.0",
+    "eslint-config-node": "4.1.0",
+    "eslint-config-prettier": "8.3.0",
+    "eslint-plugin-mocha": "9.0.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-prettier": "4.0.0",
     "fortune-mongodb": "git+ssh://github.com/flyvictor/fortune-mongodb.git#v1.1.5",
     "istanbul": "0.4.0",
+    "lint-staged": "11.1.2",
+    "prettier": "2.4.1",
     "should": "13.2.3",
     "sinon": "7.5.0"
   },
   "scripts": {
     "test": "node_modules/mocha/bin/mocha --recursive -R spec --timeout 4000",
-    "coverage": "istanbul cover --dir ./reports _mocha -- --recursive -R spec"
+    "coverage": "istanbul cover --dir ./reports _mocha -- --recursive -R spec",
+    "lint:fix": "eslint *.js --fix",
+    "lint": "eslint *.js",
+    "prettify": "prettier *.js --write"
   },
   "engines": {
-    "node": ">=0.10"
+    "node": "18.12.0"
   },
   "keywords": [
     "json",
@@ -47,5 +61,20 @@
     "framework",
     "rest",
     "restful"
-  ]
+  ],
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run test"
+    }
+  },
+  "lint-staged": {
+    "*.(js)": [
+      "prettier --write"
+    ],
+    "*.js": [
+      "eslint --fix --resolve-plugins-relative-to ."
+    ]
+  }
 }
