@@ -9,14 +9,15 @@ module.exports = function(options){
       baseUrl = options.baseUrl;
       ids = options.ids;
     });
-    it('should be able to define custom action on resource', function(){
-      return request(baseUrl).post('/people/' + ids.people[0] + '/reset-password')
+    it('should be able to define custom action on resource', function(done){
+      request(baseUrl).post('/people/' + ids.people[0] + '/reset-password')
         .set('content-type', 'application/json')
         .send(JSON.stringify({}))
         .expect(200)
         .end(function(err, res){
           should.not.exist(err);
           res.text.should.equal('OK');
+          done();
         });
     });
     it('should run custom action when receives action url request matching specified method', function(done){

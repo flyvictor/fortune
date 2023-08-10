@@ -23,6 +23,10 @@ var hooks = {};
           });
           if (req.query['fail' + type] === 'boolean')
             return false;
+          else if (req.query['fail' + type] === 'undefined')
+            return;
+          else if (req.query['fail' + type] === 'undefined_promise')
+            return new RSVP.Promise(function(resolve) { resolve(undefined); });
           else
             return new RSVP.Promise(function(resolve) { resolve(false); });
         }
