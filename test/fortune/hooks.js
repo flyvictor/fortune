@@ -29,6 +29,24 @@ module.exports = function(options){
         });
       });
     });
+    it("should stop processing a POST request if a before hook returns undefined", function(done) {
+      var petCount;
+      request(baseUrl).get('/pets/')
+        .end(function(err, res) {
+          petCount = JSON.parse(res.text).pets.length;
+          request(baseUrl).post('/pets/?failbeforeAllWrite=undefined')
+            .set('content-type', 'application/json')
+            .send(JSON.stringify({pets: [{name: 'dave'}]}))
+            .end(function(req, res) {
+              res.statusCode.should.equal(321);
+              request(baseUrl).get('/pets/')
+                .end(function(err, res) {
+                  JSON.parse(res.text).pets.length.should.equal(petCount);
+                  done();
+                });
+            });
+        });
+    });
 
     it("should stop processing a PATCH request if a before hook returns false", function(done) {
       request(baseUrl).get('/pets/')
@@ -49,6 +67,25 @@ module.exports = function(options){
         });
       });
     });
+    it("should stop processing a PATCH request if a before hook returns undefined blablabla", function(done) {
+      request(baseUrl).get('/pets/')
+        .end(function(err, res) {
+          var pet = JSON.parse(res.text).pets[0];
+          request(baseUrl).patch('/pets/' + pet.id + '?failbeforeAllWrite=undefined')
+            .set('content-type', 'application/json')
+            .send(JSON.stringify([
+              {op: 'replace', path: '/pets/0/name', value: 'new name'}
+            ]))
+            .end(function(req, res) {
+              res.statusCode.should.equal(321);
+              request(baseUrl).get('/pets/' + pet.id)
+                .end(function(err, res) {
+                  JSON.parse(res.text).pets[0].name.should.not.eql('new name');
+                  done();
+                });
+            });
+        });
+    });
 
     it("should stop processing a PUT request if a before hook returns false", function(done) {
       request(baseUrl).get('/pets/')
@@ -66,6 +103,23 @@ module.exports = function(options){
             });
         });
       });
+    });
+    it("should stop processing a PUT request if a before hook returns undefined", function(done) {
+      request(baseUrl).get('/pets/')
+        .end(function(err, res) {
+          var pet = JSON.parse(res.text).pets[0];
+          request(baseUrl).put('/pets/' + pet.id + '?failbeforeAllWrite=boolean')
+            .set('content-type', 'application/json')
+            .send(JSON.stringify({pets: [{name: 'new pet'}]}))
+            .end(function(req, res) {
+              res.statusCode.should.equal(321);
+              request(baseUrl).get('/pets/' + pet.id)
+                .end(function(err, res) {
+                  JSON.parse(res.text).pets[0].name.should.not.eql('new pet');
+                  done();
+                });
+            });
+        });
     });
 
     it("should stop processing a POST request if a before hook returns false via a promise", function(done) {
@@ -85,6 +139,24 @@ module.exports = function(options){
             });
         });
       });
+    });
+    it("should stop processing a POST request if a before hook returns undefined via a promise", function(done) {
+      var petCount;
+      request(baseUrl).get('/pets/')
+        .end(function(err, res) {
+          petCount = JSON.parse(res.text).pets.length;
+          request(baseUrl).post('/pets/?failbeforeAllWrite=undefined_promise')
+            .set('content-type', 'application/json')
+            .send(JSON.stringify({pets: [{name: 'dave'}]}))
+            .end(function(req, res) {
+              res.statusCode.should.equal(321);
+              request(baseUrl).get('/pets/')
+                .end(function(err, res) {
+                  JSON.parse(res.text).pets.length.should.equal(petCount);
+                  done();
+                });
+            });
+        });
     });
 
     it("should stop processing a PATCH request if a before hook returns false via promise", function(done) {
@@ -106,6 +178,25 @@ module.exports = function(options){
         });
       });
     });
+    it("should stop processing a PATCH request if a before hook returns undefined via promise", function(done) {
+      request(baseUrl).get('/pets/')
+        .end(function(err, res) {
+          var pet = JSON.parse(res.text).pets[0];
+          request(baseUrl).patch('/pets/' + pet.id + '?failbeforeAllWrite=undefined_promise')
+            .set('content-type', 'application/json')
+            .send(JSON.stringify([
+              {op: 'replace', path: '/pets/0/name', value: 'new name'}
+            ]))
+            .end(function(req, res) {
+              res.statusCode.should.equal(321);
+              request(baseUrl).get('/pets/' + pet.id)
+                .end(function(err, res) {
+                  JSON.parse(res.text).pets[0].name.should.not.eql('new name');
+                  done();
+                });
+            });
+        });
+    });
 
     it("should stop processing a PUT request if a before hook returns false via promise", function(done) {
       request(baseUrl).get('/pets/')
@@ -123,6 +214,23 @@ module.exports = function(options){
             });
         });
       });
+    });
+    it("should stop processing a PUT request if a before hook returns undefined via promise", function(done) {
+      request(baseUrl).get('/pets/')
+        .end(function(err, res) {
+          var pet = JSON.parse(res.text).pets[0];
+          request(baseUrl).put('/pets/' + pet.id + '?failbeforeAllWrite=undefined_promise')
+            .set('content-type', 'application/json')
+            .send(JSON.stringify({pets: [{name: 'new pet'}]}))
+            .end(function(req, res) {
+              res.statusCode.should.equal(321);
+              request(baseUrl).get('/pets/' + pet.id)
+                .end(function(err, res) {
+                  JSON.parse(res.text).pets[0].name.should.not.eql('new pet');
+                  done();
+                });
+            });
+        });
     });
 
     it("should apply global hooks in priority order", function(done){
