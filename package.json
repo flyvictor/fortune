@@ -1,7 +1,7 @@
 {
   "name": "fortune",
   "description": "Web framework for prototyping hypermedia APIs.",
-  "version": "1.28.8",
+  "version": "1.28.9",
   "license": "MIT",
   "author": {
     "name": "flyvictor",
