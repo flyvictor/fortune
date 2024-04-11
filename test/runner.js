@@ -62,16 +62,13 @@ describe('Fortune test runner', function(){
       }).then(function(){
         app.router.post("/remove-pets-link/:personid", function(req, res) {
           var Person = app.adapter.model("person");
-          Person.findOne({email: req.params.personid}, function(err,person) {
+          Person.findOneAndUpdate({email: req.params.personid}, {$set: {pets: []}}, function(err) {
             if (err) {
               console.error(err);
               res.send(500,err);
               return;
             }
-            person.pets = null;
-            person.save(function() {
-              res.sendStatus(200);
-            });
+            res.sendStatus(200);
           });
 
         });
@@ -82,7 +79,7 @@ describe('Fortune test runner', function(){
       });
   });
 
-  beforeEach(function(done) { 
+  beforeEach(function(done) {
     var createResources = [];
     // console.log("runner beforeEach inserting resources");
 

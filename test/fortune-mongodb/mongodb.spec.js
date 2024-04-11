@@ -507,7 +507,7 @@ module.exports = function(options){
           var mockCalled = false;
           adapter._updateOneToOne = function(){
             mockCalled = true;
-            return oto.apply(null, arguments);
+            return oto.apply(adapter, arguments);
           };
           return adapter.update('person', adapter.preupdate('person', ids.people[0]), {$set: {soulmate: ids.people[1]}}).then(function(){
             mockCalled.should.equal(true);
