@@ -335,7 +335,8 @@ module.exports = function(options){
         request(baseUrl).get("/pets/" + pets.Lumpy)
           .expect(200)
           .end(function(err, res){
-            should.not.exist(err);
+            if (err) return done(err);
+            
             var body = JSON.parse(res.text);
             (body.pets.length).should.equal(1);
             (body.pets[0].name).should.equal("Lumpy");

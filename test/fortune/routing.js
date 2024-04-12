@@ -177,6 +177,8 @@ module.exports = function(options){
               { op: 'remove', path: '/people/0/nestedArray/' + nestedObjectId }
             ]))
             .end( function( err, res ){
+              if (err) return done(err);
+
               var body = JSON.parse(res.text);
               body.people[0].nestedArray.length.should.equal( 2 );
 
@@ -184,7 +186,8 @@ module.exports = function(options){
                 .set('content-type', 'application/json')
                 .expect( 200 )
                 .end( function( err, res ){
-                  should.not.exist(err);
+                  if (err) return done(err);
+
                   var body = JSON.parse(res.text);
                   body.people[0].nestedArray.length.should.equal( 3 );
 
@@ -405,14 +408,16 @@ module.exports = function(options){
         it('should apply update to correct item matching provided _id', function(done){
           request(baseUrl).get('/people/' + ids.people[0])
             .end(function(err, res){
-              should.not.exist(err);
+              if (err) return done(err);
+
               var body = JSON.parse(res.text);
               var person = body.people[0];
               var itemId = person.nestedArray[0]._id;
               patch('/people/' + ids.people[0], [
                 {op: 'replace', path: '/people/0/nestedArray/' + itemId + '/nestedField1', value: 'updated'}
               ], function(err, res){
-                should.not.exist(err);
+                if (err) return done(err);
+
                 var body = JSON.parse(res.text);
                 console.log(body.people[0]);
                 body.people[0].nestedArray[0].nestedField1.should.equal('updated');
