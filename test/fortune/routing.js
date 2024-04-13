@@ -1,4 +1,3 @@
-var inflect= require('i')();
 var should = require('should');
 var _ = require('lodash');
 var RSVP = require('rsvp');
@@ -379,6 +378,18 @@ module.exports = function(options){
     }
 
     describe("PATCH replace method", function(){
+      it("with empty update", function(done){
+        request(baseUrl).patch("/cars/" + ids.cars[0])
+          .set('content-type', 'application/json')
+          .send(JSON.stringify([]))
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            body.cars[0].additionalDetails.seats.should.equal(5);
+            done();
+          })
+      })
       it("with embedded documents", function(done){
         request(baseUrl).patch("/cars/" + ids.cars[0])
           .set('content-type', 'application/json')
