@@ -416,7 +416,7 @@ module.exports = function(options){
             done();
           });
         });
-        it.only('should apply update to correct item matching provided _id', function(done){
+        it('should apply update to correct item matching provided _id', function(done){
           request(baseUrl).get('/people/' + ids.people[0])
             .end(function(err, res){
               if (err) return done(err);
