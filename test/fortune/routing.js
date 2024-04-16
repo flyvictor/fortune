@@ -1,4 +1,3 @@
-var inflect= require('i')();
 var should = require('should');
 var _ = require('lodash');
 var RSVP = require('rsvp');
@@ -177,6 +176,8 @@ module.exports = function(options){
               { op: 'remove', path: '/people/0/nestedArray/' + nestedObjectId }
             ]))
             .end( function( err, res ){
+              if (err) return done(err);
+
               var body = JSON.parse(res.text);
               body.people[0].nestedArray.length.should.equal( 2 );
 
@@ -184,7 +185,8 @@ module.exports = function(options){
                 .set('content-type', 'application/json')
                 .expect( 200 )
                 .end( function( err, res ){
-                  should.not.exist(err);
+                  if (err) return done(err);
+
                   var body = JSON.parse(res.text);
                   body.people[0].nestedArray.length.should.equal( 3 );
 
@@ -376,6 +378,18 @@ module.exports = function(options){
     }
 
     describe("PATCH replace method", function(){
+      it("with empty update", function(done){
+        request(baseUrl).patch("/cars/" + ids.cars[0])
+          .set('content-type', 'application/json')
+          .send(JSON.stringify([]))
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            body.cars[0].additionalDetails.seats.should.equal(5);
+            done();
+          })
+      })
       it("with embedded documents", function(done){
         request(baseUrl).patch("/cars/" + ids.cars[0])
           .set('content-type', 'application/json')
@@ -405,14 +419,16 @@ module.exports = function(options){
         it('should apply update to correct item matching provided _id', function(done){
           request(baseUrl).get('/people/' + ids.people[0])
             .end(function(err, res){
-              should.not.exist(err);
+              if (err) return done(err);
+
               var body = JSON.parse(res.text);
               var person = body.people[0];
               var itemId = person.nestedArray[0]._id;
               patch('/people/' + ids.people[0], [
                 {op: 'replace', path: '/people/0/nestedArray/' + itemId + '/nestedField1', value: 'updated'}
               ], function(err, res){
-                should.not.exist(err);
+                if (err) return done(err);
+
                 var body = JSON.parse(res.text);
                 console.log(body.people[0]);
                 body.people[0].nestedArray[0].nestedField1.should.equal('updated');
