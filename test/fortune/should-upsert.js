@@ -44,14 +44,25 @@ module.exports = function(options){
       });
     }
 
+
+
+    it.skip('should generate a valid _id for upserted record', function(){
+      return createDuplicate().then(function(){
+        return options.app.adapter.mongoose.connections[1].db.collection('people').findOne({ upsertTest: 'match' });
+      }).then(function(match){
+        console.log(match);
+        match._id.toString().should.match(/[0-9a-f]{24}/);
+      });
+    });
+
     it('should not create duplicate user with matching upsert key', function() {
       return createDuplicate().then(function(){
-          return createDuplicate();
-        }).then(function(){
-          return countDupes();
-        }).then(function(count){
-          count.should.equal(1);
-        });
+        return createDuplicate();
+      }).then(function(){
+        return countDupes();
+      }).then(function(count){
+        count.should.equal(1);
+      });
     });
     it('should not create duplicate user with matching upsert key if creates are running in parallel', function(done){
       RSVP.all([
