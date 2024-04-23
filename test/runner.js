@@ -38,13 +38,14 @@ describe('Fortune test runner', function(){
     var app = options.app;
     options.app.adapter.awaitConnection().then(function(){
       return new RSVP.Promise(function(resolve){
-        app.adapter.mongoose.connections[1].db.listCollections().toArray(function(err, collections){
+        const connection = app.adapter.mongoose.connections[app.adapter.mongoose.connections.length - 1];
+        connection.db.listCollections().toArray(function(err, collections){
           if(err) throw err;
           resolve(_.compact(_.map(collections, function(collection){
             var name = collection.name.split(".")[0];
             if(name && name !== "system"){
               return new RSVP.Promise(function(resolve){
-                app.adapter.mongoose.connections[1].db.collection(name, function(err, collection){
+                connection.db.collection(name, function(err, collection){
                   collection.deleteMany({},null, function(){
                     console.log("Wiped collection", name);
                     resolve();
@@ -82,7 +83,7 @@ describe('Fortune test runner', function(){
       });
   });
 
-  beforeEach(function(done) { 
+  beforeEach(function(done) {
     var createResources = [];
     // console.log("runner beforeEach inserting resources");
 
