@@ -44,13 +44,10 @@ module.exports = function(options){
       });
     }
 
-
-
-    it.skip('should generate a valid _id for upserted record', function(){
+    it('should generate a valid _id for upserted record', function(){
       return createDuplicate().then(function(){
-        return options.app.adapter.mongoose.connections[1].db.collection('people').findOne({ upsertTest: 'match' });
+        return options.app.adapter.mongoose.connections[options.app.adapter.mongoose.connections.length - 1].db.collection('people').findOne({ upsertTest: 'match' });
       }).then(function(match){
-        console.log(match);
         match._id.toString().should.match(/[0-9a-f]{24}/);
       });
     });
