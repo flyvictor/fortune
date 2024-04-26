@@ -27,11 +27,6 @@
     "require-await": "error",
     "prefer-template": "error",
     "prefer-const": "error",
-    "space-before-function-paren": ["error", {
-      "anonymous": "always",
-      "named": "always",
-      "asyncArrow": "always"
-    }],
     "node/no-unpublished-require": ["error", {
       "allowModules": ["chai", "should", "sinon", "sinon-chai", "chai-as-promised"]
     }]

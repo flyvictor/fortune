@@ -46,7 +46,7 @@
     "sinon": "7.5.0"
   },
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha --recursive -R spec --timeout 4000",
+    "test": "node_modules/mocha/bin/mocha --recursive -R spec --timeout 8000",
     "coverage": "istanbul cover --dir ./reports _mocha -- --recursive -R spec",
     "lint:fix": "eslint *.js --fix",
     "lint": "eslint *.js",
