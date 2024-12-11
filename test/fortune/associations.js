@@ -45,12 +45,7 @@ module.exports = function(options){
         }))
         .then(function(){
           return RSVP.all(_.map(ids.pets, function(petId){
-            return new Promise(function(resolve, reject){
-              app.adapter.model('pet').findOne({_id: petId}, function(err, pet){
-                if (err) return reject(err);
-                resolve(pet);
-              });
-            })
+            return app.adapter.model('pet').findOne({_id: petId});
           }));
         }).then(function(pets){
           _.each(pets, function(pet){

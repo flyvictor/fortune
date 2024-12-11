@@ -13,7 +13,7 @@ describe('custom-types util', function(){
   describe("Custom Types", function() {
     var sandbox;
     beforeEach(function(){
-      sandbox = sinon.sandbox.create()
+      sandbox = sinon.createSandbox()
     });
 
     afterEach(function() {

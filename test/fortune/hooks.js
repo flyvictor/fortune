@@ -369,7 +369,6 @@ module.exports = function(options){
         ]))
         .end(function(err, res){
           should.not.exist(err);
-          console.log(res.text);
           var body = JSON.parse(res.text);
           body.hookCallCount.should.equal(1);
           done();
