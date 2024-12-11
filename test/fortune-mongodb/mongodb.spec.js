@@ -24,12 +24,11 @@ module.exports = function (options) {
         adapter.create('pet', doc).then(function () {
           const model = adapter.model('pet');
           model
-            .findOne({ _id: '123456789012345678901234' })
-            .exec(function (err, doc) {
-              should.not.exist(err);
+            .findOne({ _id: '123456789012345678901234' }).then(function (doc) {
               should.exist(doc);
               done();
-            });
+            })
+            .catch(done);
         });
       });
       it('should be able to cast provided id to proper type', function (done) {
@@ -39,12 +38,11 @@ module.exports = function (options) {
         adapter.create('person', doc).then(function () {
           const model = adapter.model('person');
           model
-            .findOne({ email: '123456789012345678901234' })
-            .exec(function (err, doc) {
-              should.not.exist(err);
+            .findOne({ email: '123456789012345678901234' }).then(function (doc) {
               should.exist(doc);
               done();
-            });
+            })
+            .catch(done);
         });
       });
       it('should upsert where the appropriate upsert keys are specified', function () {
@@ -70,12 +68,11 @@ module.exports = function (options) {
 
           return model
             .findOne({ email: '123456789012345678901234' })
-            .exec(function (err, doc) {
-              should.not.exist(err);
+            .then(function (doc) {
               should.exist(doc);
-
               adapter._shouldUpsert = origUpsert;
-            });
+            })
+            .catch();
         });
       });
       it('should not upsert where the appropriate upsert keys are not specified', function (done) {
@@ -101,13 +98,12 @@ module.exports = function (options) {
 
           model
             .findOne({ email: '123456789012345678901234' })
-            .exec(function (err, doc) {
-              should.not.exist(err);
+            .then(function (doc) {
               should.exist(doc);
-
               adapter._shouldUpsert = origUpsert;
               done();
-            });
+            })
+            .catch(done);
         });
       });
     });

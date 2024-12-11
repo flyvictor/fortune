@@ -167,7 +167,7 @@ module.exports = function(options){
             var body = JSON.parse(res.text);
             body.should.eql({
               error: 'Request was malformed.',
-              detail: 'CastError: Cast to date failed for value "time of big bang" at path "birthday" for model "person"'
+              detail: 'CastError: Cast to date failed for value "time of big bang" (type string) at path "birthday" for model "person"'
             });
             done();
           });
@@ -204,7 +204,7 @@ module.exports = function(options){
             var body = JSON.parse(res.text);
             body.should.eql({
               error: 'Request was malformed.',
-              detail: 'CastError: Cast to date failed for value "time of big bang" at path "birthday" for model "person"'
+              detail: 'CastError: Cast to date failed for value "time of big bang" (type string) at path "birthday" for model "person"'
             });
             done();
           });
