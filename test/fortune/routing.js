@@ -5,28 +5,30 @@ var request = require('supertest');
 var Promise = RSVP.Promise;
 var fixtures = require('../fixtures.json');
 
-module.exports = function(options){
-  describe('routing', function(){
+module.exports = function (options) {
+  describe('routing', function () {
     var app, baseUrl, ids, adapter;
-    beforeEach(function(){
+    beforeEach(function () {
       app = options.app;
       baseUrl = options.baseUrl;
       ids = options.ids;
       adapter = options.app.adapter;
     });
 
-    describe('getting a list of resources', function() {
-      _.each(fixtures, function(resources, collection) {
-        it('in collection "' + collection + '"', function(done) {
+    describe('getting a list of resources', function () {
+      _.each(fixtures, function (resources, collection) {
+        it('in collection "' + collection + '"', function (done) {
           request(baseUrl)
             .get('/' + collection)
             .expect('Content-Type', /json/)
             .expect(200)
-            .end(function(error, response) {
+            .end(function (error, response) {
               should.not.exist(error);
               var body = JSON.parse(response.text);
-              ids[collection].forEach(function(id) {
-                _.includes(_.map(body[collection], 'id'), id).should.equal(true);
+              ids[collection].forEach(function (id) {
+                _.includes(_.map(body[collection], 'id'), id).should.equal(
+                  true,
+                );
               });
               done();
             });
@@ -37,58 +39,69 @@ module.exports = function(options){
     describe('getting each individual resource', function () {
       _.each(fixtures, function (resources, collection) {
         it('in collection "' + collection + '"', function (done) {
-          RSVP.all(ids[collection].map(function (id) {
+          RSVP.all(
+            ids[collection].map(function (id) {
               return new Promise(function (resolve) {
                 request(baseUrl)
                   .get('/' + collection + '/' + id)
                   .expect('Content-Type', /json/)
                   .expect(200)
-                  .end(function(error, response) {
+                  .end(function (error, response) {
                     should.not.exist(error);
                     var body = JSON.parse(response.text);
-                    body[collection].forEach(function(resource) {
-                      (resource.id).should.equal(id);
+                    body[collection].forEach(function (resource) {
+                      resource.id.should.equal(id);
                     });
                     resolve();
                   });
               });
-            })).then(function () {
-              done();
-            });
+            }),
+          ).then(function () {
+            done();
+          });
         });
       });
     });
 
-    describe('getting a subresource', function(){
-      beforeEach(function(done){
-        request(baseUrl).patch('/people/' + ids.people[0])
+    describe('getting a subresource', function () {
+      beforeEach(function (done) {
+        request(baseUrl)
+          .patch('/people/' + ids.people[0])
           .set('content-type', 'application/json')
-          .send(JSON.stringify([
-            {op: 'replace', path: '/people/0/links/addresses', value: [ids.addresses[0], ids.addresses[1]]}
-          ]))
+          .send(
+            JSON.stringify([
+              {
+                op: 'replace',
+                path: '/people/0/links/addresses',
+                value: [ids.addresses[0], ids.addresses[1]],
+              },
+            ]),
+          )
           .expect(200)
-          .end(function(err, res){
+          .end(function (err, res) {
             should.not.exist(err);
             var body = JSON.parse(res.text);
             body.people[0].links.addresses.length.should.equal(2);
             done();
           });
       });
-      it('should set correct route type and expose it to hooks', function(done){
-        request(baseUrl).get('/people/' + ids.people[0] + '/addresses')
+      it('should set correct route type and expose it to hooks', function (done) {
+        request(baseUrl)
+          .get('/people/' + ids.people[0] + '/addresses')
           .set('route-type-match', 'getSubresources')
           .expect(200)
           .expect('route-type', 'getSubresources')
           .expect('route-type-match', 'true')
-          .end(function(err){
+          .end(function (err) {
             should.not.exist(err);
             done();
           });
       });
-      it('should be able to return subresource', function(done){
-        request(baseUrl).get('/people/' + ids.people[0] + '/addresses')
+      it('should be able to return subresource', function (done) {
+        request(baseUrl)
+          .get('/people/' + ids.people[0] + '/addresses')
           .expect(200)
-          .end(function(err, res){
+          .end(function (err, res) {
             should.not.exist(err);
             var body = JSON.parse(res.text);
             body.addresses.length.should.equal(2);
@@ -96,222 +109,285 @@ module.exports = function(options){
             done();
           });
       });
-      it('should apply provided filters to subresource only', function(done){
-        request(baseUrl).get('/addresses/' + ids.addresses[0])
+      it('should apply provided filters to subresource only', function (done) {
+        request(baseUrl)
+          .get('/addresses/' + ids.addresses[0])
           .expect(200)
-          .end(function(err, res){
+          .end(function (err, res) {
             should.not.exist(err);
             var addressName = JSON.parse(res.text).addresses[0].name;
-            request(baseUrl).get('/people/' + ids.people[0] + '/addresses?filter[name]=' + addressName)
+            request(baseUrl)
+              .get(
+                '/people/' +
+                  ids.people[0] +
+                  '/addresses?filter[name]=' +
+                  addressName,
+              )
               .expect(200)
-              .end(function(err, res){
+              .end(function (err, res) {
                 should.not.exist(err);
                 var body = JSON.parse(res.text);
                 body.addresses.length.should.equal(1);
                 should.not.exist(body.people);
                 done();
               });
-          })
+          });
       });
     });
 
-    describe('non-destructive deletes on subresources', function(){
+    describe('non-destructive deletes on subresources', function () {
       var nestedObjectId;
-      beforeEach(function(done){
+      beforeEach(function (done) {
         var removeObjectId;
         var nestedObject1 = {
           nestedField1: 'A string',
-          nestedField2: 1000000
+          nestedField2: 1000000,
         };
         var nestedObject2 = {
           nestedField1: 'Another string',
-          nestedField2: 1
+          nestedField2: 1,
         };
         var nestedObject3 = {
           nestedField1: 'A third string',
-          nestedField2: 3
+          nestedField2: 3,
         };
-        request(baseUrl).patch('/people/' + ids.people[0])
+        request(baseUrl)
+          .patch('/people/' + ids.people[0])
           .set('content-type', 'application/json')
-          .send(JSON.stringify([
-            {op: 'add', path: '/people/0/nestedArray/-', value: nestedObject1},
-            {op: 'add', path: '/people/0/nestedArray/-', value: nestedObject2},
-            {op: 'add', path: '/people/0/nestedArray/-', value: nestedObject3}
-          ]))
+          .send(
+            JSON.stringify([
+              {
+                op: 'add',
+                path: '/people/0/nestedArray/-',
+                value: nestedObject1,
+              },
+              {
+                op: 'add',
+                path: '/people/0/nestedArray/-',
+                value: nestedObject2,
+              },
+              {
+                op: 'add',
+                path: '/people/0/nestedArray/-',
+                value: nestedObject3,
+              },
+            ]),
+          )
           .expect(200)
-          .end(function(err, res){
+          .end(function (err, res) {
             should.not.exist(err);
             var body = JSON.parse(res.text);
 
-            body.people[0].nestedArray.length.should.equal( 3 );
+            body.people[0].nestedArray.length.should.equal(3);
             nestedObjectId = body.people[0].nestedArray[0]._id;
             removeObjectId = body.people[0].nestedArray[2]._id;
             done();
           });
-        });
-        it('should remove subdocument by ID', function(done){
-          request(baseUrl).patch('/people/' + ids.people[0] )
-            .set('content-type', 'application/json')
-            .send(JSON.stringify([
-              { op: 'remove', path: '/people/0/nestedArray/' + nestedObjectId }
-            ]))
-            .expect( 200 )
-            .end( function( err, res ){
-              should.not.exist(err);
-              var body = JSON.parse(res.text);
-              body.people[0].nestedArray.length.should.equal( 2 );
-
-              var filteredArray = body.people[0].nestedArray.filter( function( arg ){
-                return arg._id === nestedObjectId;
-              });
-              filteredArray.length.should.equal(0);
-
-              done();
-            });
-        });
-        it('deleted subdocuments should be returned with includeDeleted flag', function(done){
-          request(baseUrl).patch('/people/' + ids.people[0] )
-            .set('content-type', 'application/json')
-            .send(JSON.stringify([
-              { op: 'remove', path: '/people/0/nestedArray/' + nestedObjectId }
-            ]))
-            .end( function( err, res ){
-              if (err) return done(err);
-
-              var body = JSON.parse(res.text);
-              body.people[0].nestedArray.length.should.equal( 2 );
-
-              request(baseUrl).get('/people/' + ids.people[0] + '?includeDeleted=1' )
-                .set('content-type', 'application/json')
-                .expect( 200 )
-                .end( function( err, res ){
-                  if (err) return done(err);
-
-                  var body = JSON.parse(res.text);
-                  body.people[0].nestedArray.length.should.equal( 3 );
-
-                  var filteredArray = body.people[0].nestedArray.filter( function( arg ){
-                    return arg._id === nestedObjectId;
-                  });
-
-                  filteredArray.length.should.equal(1);
-                  done();
-                });
-            });
-        });
-        it('deleted subdocuments should have a deletedAt field', function(done){
-          request(baseUrl).patch('/people/' + ids.people[0] )
-            .set('content-type', 'application/json')
-            .send(JSON.stringify([
-              { op: 'remove', path: '/people/0/nestedArray/' + nestedObjectId }
-            ]))
-            .end( function( err, res ){
-              var body = JSON.parse(res.text);
-              body.people[0].nestedArray.length.should.equal( 2 );
-
-              request(baseUrl).get('/people/' + ids.people[0] + '?includeDeleted=1' )
-                .set('content-type', 'application/json')
-                .expect( 200 )
-                .end( function( err, res ){
-                  should.not.exist(err);
-                  var body = JSON.parse(res.text);
-                  body.people[0].nestedArray.length.should.equal( 3 );
-
-                  var filteredArray = body.people[0].nestedArray.filter( function( arg ){
-                    return arg._id === nestedObjectId;
-                  });
-
-                  filteredArray[ 0 ].should.have.ownProperty( 'deletedAt'  );
-                  done();
-                });
-            });
-        });
       });
-
-    describe('creating a list of resources', function(){
-      it('should create a list of resources setting proper references', function(done){
-        var resources = _.reduce([ids.people[0], ids.people[0], ids.people[1]], function(memo, person){
-          memo.push({
-            name: '' + memo.length,
-            person: person
-          });
-          return memo;
-        }, []);
-        request(baseUrl).post('/addresses')
+      it('should remove subdocument by ID', function (done) {
+        request(baseUrl)
+          .patch('/people/' + ids.people[0])
           .set('content-type', 'application/json')
-          .send(JSON.stringify({
-            addresses: resources
-          }))
-          .end(function(err, res){
+          .send(
+            JSON.stringify([
+              { op: 'remove', path: '/people/0/nestedArray/' + nestedObjectId },
+            ]),
+          )
+          .expect(200)
+          .end(function (err, res) {
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            var ids = body.addresses.map(function(addr){
+            body.people[0].nestedArray.length.should.equal(2);
+
+            var filteredArray = body.people[0].nestedArray.filter(function (
+              arg,
+            ) {
+              return arg._id === nestedObjectId;
+            });
+            filteredArray.length.should.equal(0);
+
+            done();
+          });
+      });
+      it('deleted subdocuments should be returned with includeDeleted flag', function (done) {
+        request(baseUrl)
+          .patch('/people/' + ids.people[0])
+          .set('content-type', 'application/json')
+          .send(
+            JSON.stringify([
+              { op: 'remove', path: '/people/0/nestedArray/' + nestedObjectId },
+            ]),
+          )
+          .end(function (err, res) {
+            if (err) return done(err);
+
+            var body = JSON.parse(res.text);
+            body.people[0].nestedArray.length.should.equal(2);
+
+            request(baseUrl)
+              .get('/people/' + ids.people[0] + '?includeDeleted=1')
+              .set('content-type', 'application/json')
+              .expect(200)
+              .end(function (err, res) {
+                if (err) return done(err);
+
+                var body = JSON.parse(res.text);
+                body.people[0].nestedArray.length.should.equal(3);
+
+                var filteredArray = body.people[0].nestedArray.filter(function (
+                  arg,
+                ) {
+                  return arg._id === nestedObjectId;
+                });
+
+                filteredArray.length.should.equal(1);
+                done();
+              });
+          });
+      });
+      it('deleted subdocuments should have a deletedAt field', function (done) {
+        request(baseUrl)
+          .patch('/people/' + ids.people[0])
+          .set('content-type', 'application/json')
+          .send(
+            JSON.stringify([
+              { op: 'remove', path: '/people/0/nestedArray/' + nestedObjectId },
+            ]),
+          )
+          .end(function (err, res) {
+            var body = JSON.parse(res.text);
+            body.people[0].nestedArray.length.should.equal(2);
+
+            request(baseUrl)
+              .get('/people/' + ids.people[0] + '?includeDeleted=1')
+              .set('content-type', 'application/json')
+              .expect(200)
+              .end(function (err, res) {
+                should.not.exist(err);
+                var body = JSON.parse(res.text);
+                body.people[0].nestedArray.length.should.equal(3);
+
+                var filteredArray = body.people[0].nestedArray.filter(function (
+                  arg,
+                ) {
+                  return arg._id === nestedObjectId;
+                });
+
+                filteredArray[0].should.have.ownProperty('deletedAt');
+                done();
+              });
+          });
+      });
+    });
+
+    describe('creating a list of resources', function () {
+      it('should create a list of resources setting proper references', function (done) {
+        var resources = _.reduce(
+          [ids.people[0], ids.people[0], ids.people[1]],
+          function (memo, person) {
+            memo.push({
+              name: '' + memo.length,
+              person: person,
+            });
+            return memo;
+          },
+          [],
+        );
+        request(baseUrl)
+          .post('/addresses')
+          .set('content-type', 'application/json')
+          .send(
+            JSON.stringify({
+              addresses: resources,
+            }),
+          )
+          .end(function (err, res) {
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            var ids = body.addresses.map(function (addr) {
               should.exist(addr.links.person);
               return addr.id;
             });
-            adapter.findMany('address', {id: {$in: ids}}).then(function(found){
-              found.forEach(function(addr){
-                should.exist(addr.links.person);
+            adapter
+              .findMany('address', { id: { $in: ids } })
+              .then(function (found) {
+                found.forEach(function (addr) {
+                  should.exist(addr.links.person);
+                });
+                done();
               });
-              done();
-            });
           });
       });
 
-      it.skip('should properly bind created resources when they are created in parallel', function(done){
-        var people = _.reduce(['one', 'two', 'three'], function(memo, mail){
-          memo.push({email: mail});
-          return memo;
-        }, []);
-        var addresses = _.reduce(['one', 'two', 'three'], function(memo, person){
-          memo.push({person: person});
-          return memo;
-        }, []);
-        function create(path, body){
-          return new Promise(function(resolve){
-            request(baseUrl).post(path).set('content-type', 'application/json')
-              .send(JSON.stringify(body)).end(function(err, res){
+      it.skip('should properly bind created resources when they are created in parallel', function (done) {
+        var people = _.reduce(
+          ['one', 'two', 'three'],
+          function (memo, mail) {
+            memo.push({ email: mail });
+            return memo;
+          },
+          [],
+        );
+        var addresses = _.reduce(
+          ['one', 'two', 'three'],
+          function (memo, person) {
+            memo.push({ person: person });
+            return memo;
+          },
+          [],
+        );
+        function create(path, body) {
+          return new Promise(function (resolve) {
+            request(baseUrl)
+              .post(path)
+              .set('content-type', 'application/json')
+              .send(JSON.stringify(body))
+              .end(function (err, res) {
                 should.not.exist(err);
                 var body = JSON.parse(res.text);
-                _.each(body[path.replace('/', '')], function(i){
+                _.each(body[path.replace('/', '')], function (i) {
                   console.log(i);
                 });
-                resolve(_.map(body[path.replace('/', '')], function(i){return i.id}));
+                resolve(
+                  _.map(body[path.replace('/', '')], function (i) {
+                    return i.id;
+                  }),
+                );
               });
-          })
+          });
         }
-        function verify(model, ids, link){
-          return adapter.findMany(model, ids).then(function(found){
-            found.forEach(function(f){
+        function verify(model, ids, link) {
+          return adapter.findMany(model, ids).then(function (found) {
+            found.forEach(function (f) {
               should.exist(f.links[link]);
             });
             return true;
           });
         }
-          RSVP.all([
-            create('/addresses', {addresses: addresses}),
-            create('/people', {people: people})
-          ]).then(function(results){
+        RSVP.all([
+          create('/addresses', { addresses: addresses }),
+          create('/people', { people: people }),
+        ])
+          .then(function (results) {
             return RSVP.all([
               verify('person', results[0], 'addresses'),
-              verify('address', results[1], 'person')
+              verify('address', results[1], 'person'),
             ]);
           })
-          .then(function(ok){
+          .then(function (ok) {
             _.every(ok).should.equal(true);
             done();
           });
       });
     });
 
-
-    describe("collection delete route", function(){
-      it("should remove all data from the database for a collection", function(done){
-        new Promise(function(resolve){
+    describe('collection delete route', function () {
+      it('should remove all data from the database for a collection', function (done) {
+        new Promise(function (resolve) {
           request(baseUrl)
-            .get("/people/")
+            .get('/people/')
             .expect(200)
-            .end(function(err,res){
+            .end(function (err, res) {
               should.not.exist(err);
               res.statusCode.should.equal(200);
               var body = JSON.parse(res.text);
@@ -320,21 +396,23 @@ module.exports = function(options){
 
               resolve();
             });
-        }).then(function(){
-            return new Promise(function(resolve){
+        })
+          .then(function () {
+            return new Promise(function (resolve) {
               request(baseUrl)
-                .del("/people/")
+                .del('/people/')
                 .expect(204)
-                .end(function(err,res){
+                .end(function (err, res) {
                   should.not.exist(err);
                   resolve();
                 });
             });
-          }).then(function(){
+          })
+          .then(function () {
             request(baseUrl)
-              .get("/people/")
+              .get('/people/')
               .expect(200)
-              .end(function(err,res){
+              .end(function (err, res) {
                 should.not.exist(err);
                 res.statusCode.should.equal(200);
                 var body = JSON.parse(res.text);
@@ -347,15 +425,17 @@ module.exports = function(options){
       });
     });
 
-    describe('individual delete route', function(){
-      it('should delete single value', function(done){
-        request(baseUrl).del('/people/' + ids.people[0])
+    describe('individual delete route', function () {
+      it('should delete single value', function (done) {
+        request(baseUrl)
+          .del('/people/' + ids.people[0])
           .expect(204)
-          .end(function(err){
+          .end(function (err) {
             should.not.exist(err);
-            request(baseUrl).get('/people')
+            request(baseUrl)
+              .get('/people')
               .expect(200)
-              .end(function(err, res){
+              .end(function (err, res) {
                 should.not.exist(err);
                 var body = JSON.parse(res.text);
                 body.people.length.should.be.greaterThan(0);
@@ -366,177 +446,219 @@ module.exports = function(options){
     });
 
     //helpers
-    function patch(url, cmd, cb){
-      request(baseUrl).patch(url)
+    function patch(url, cmd, cb) {
+      request(baseUrl)
+        .patch(url)
         .set('Content-Type', 'application/json')
         .send(JSON.stringify(cmd))
         .expect(200)
-        .end(function(err, res){
+        .end(function (err, res) {
           should.not.exist(err);
           cb(err, res);
         });
     }
 
-    describe("PATCH replace method", function(){
-      it("with empty update", function(done){
-        request(baseUrl).patch("/cars/" + ids.cars[0])
+    describe('PATCH replace method', function () {
+      it('with empty update', function (done) {
+        request(baseUrl)
+          .patch('/cars/' + ids.cars[0])
           .set('content-type', 'application/json')
           .send(JSON.stringify([]))
           .expect(200)
-          .end(function(err, res){
-            should.not.exist(err);
+          .end(function (err, res) {
+            if (err) return done(err);
             var body = JSON.parse(res.text);
             body.cars[0].additionalDetails.seats.should.equal(5);
             done();
-          })
-      })
-      it("with embedded documents", function(done){
-        request(baseUrl).patch("/cars/" + ids.cars[0])
+          });
+      });
+      it('with embedded documents', function (done) {
+        request(baseUrl)
+          .patch('/cars/' + ids.cars[0])
           .set('content-type', 'application/json')
-          .send(JSON.stringify([
-            {op: 'replace', path: '/cars/0/model', value: 'monster truck'},
-            {op: 'replace', path: '/cars/0/additionalDetails/wheels', value: 10},
-            {op: 'replace', path: '/cars/0/additionalDetails/seats', value: 100}
-          ]))
+          .send(
+            JSON.stringify([
+              { op: 'replace', path: '/cars/0/model', value: 'monster truck' },
+              {
+                op: 'replace',
+                path: '/cars/0/additionalDetails/wheels',
+                value: 10,
+              },
+              {
+                op: 'replace',
+                path: '/cars/0/additionalDetails/seats',
+                value: 100,
+              },
+            ]),
+          )
           .expect(200)
-          .end(function(err, res){
-            should.not.exist(err);
+          .end(function (err, res) {
+            if (err) return done(err);
             var body = JSON.parse(res.text);
             body.cars[0].additionalDetails.seats.should.equal(100);
             done();
           });
       });
-      describe('with nested schemas', function(){
-        beforeEach(function(done){
-          patch('/people/' + ids.people[0], [
-            {op: 'add', path: '/people/0/nestedArray', value: {nestedField1: 'original'}},
-            {op: 'add', path: '/people/0/nestedArray', value: {nestedField1: 'original'}}
-          ], function(err){
-            should.not.exist(err);
-            done();
-          });
+      describe('with nested schemas', function () {
+        beforeEach(function (done) {
+          patch(
+            '/people/' + ids.people[0],
+            [
+              {
+                op: 'add',
+                path: '/people/0/nestedArray',
+                value: { nestedField1: 'original' },
+              },
+              {
+                op: 'add',
+                path: '/people/0/nestedArray',
+                value: { nestedField1: 'original' },
+              },
+            ],
+            function (err) {
+              if (err) return done(err);
+              done();
+            },
+          );
         });
-        it('should apply update to correct item matching provided _id', function(done){
-          request(baseUrl).get('/people/' + ids.people[0])
-            .end(function(err, res){
+        it('should apply update to correct item matching provided _id', function (done) {
+          request(baseUrl)
+            .get('/people/' + ids.people[0])
+            .end(function (err, res) {
               if (err) return done(err);
 
               var body = JSON.parse(res.text);
               var person = body.people[0];
               var itemId = person.nestedArray[0]._id;
-              patch('/people/' + ids.people[0], [
-                {op: 'replace', path: '/people/0/nestedArray/' + itemId + '/nestedField1', value: 'updated'}
-              ], function(err, res){
-                if (err) return done(err);
+              patch(
+                '/people/' + ids.people[0],
+                [
+                  {
+                    op: 'replace',
+                    path: '/people/0/nestedArray/' + itemId + '/nestedField1',
+                    value: 'updated',
+                  },
+                ],
+                function (err, res) {
+                  if (err) return done(err);
 
-                var body = JSON.parse(res.text);
-                console.log(body.people[0]);
-                body.people[0].nestedArray[0].nestedField1.should.equal('updated');
-                body.people[0].nestedArray[1].nestedField1.should.equal('original');
-                done();
-              });
+                  try {
+                    var body = JSON.parse(res.text);
+                    body.people[0].nestedArray[0].nestedField1.should.equal(
+                      'updated',
+                    );
+                    body.people[0].nestedArray[1].nestedField1.should.equal(
+                      'original',
+                    );
+                    done();
+                  } catch (err) {
+                    done(err);
+                  }
+                }
+              );
             });
         });
-        it('should be able to update deleted item matching provided _id', function(done){
-          request(baseUrl).get('/people/' + ids.people[0])
-            .end(function(err, res){
-              should.not.exist(err);
+        it('should be able to update deleted item matching provided _id', function (done) {
+          request(baseUrl)
+            .get('/people/' + ids.people[0])
+            .end(function (err, res) {
+              if (err) return done(err);
+
               var body = JSON.parse(res.text);
               var person = body.people[0];
               var itemId = person.nestedArray[0]._id;
-              patch('/people/' + person.id, [
-                {op: 'remove', path: '/people/0/nestedArray/' + itemId}
-              ], function(err){
-                should.not.exist(err);
-                patch('/people/' + person.id, [
-                  {op: 'replace', path: '/people/0/nestedArray/' + itemId + '/nestedField1', value: 'updated'}
-                ], function(err){
-                  should.not.exist(err);
-                  options.app.adapter.model('person').findOne({email: person.email}, function(err, dbPerson){
-                    should.not.exist(err);
-                    dbPerson._internal.deleted.nestedArray[0].nestedField1.should.equal('updated');
-                    done();
-                  });
-                });
-              });
-            })
+
+              patch(
+                '/people/' + person.id,
+                [{ op: 'remove', path: '/people/0/nestedArray/' + itemId }],
+                function (err) {
+                  if (err) return done(err);
+                  
+                  patch(
+                    '/people/' + person.id,
+                    [
+                      {
+                        op: 'replace',
+                        path:
+                          '/people/0/nestedArray/' + itemId + '/nestedField1',
+                        value: 'updated',
+                      },
+                    ],
+                    function (err) {
+                      if (err) return done(err);
+                      options.app.adapter
+                        .model('person')
+                        .findOne(
+                          { email: person.email },
+                        ).then((dbPerson) => {
+                          should.not.exist(err);
+                          dbPerson._internal.deleted.nestedArray[0].nestedField1.should.equal(
+                            'updated',
+                          );
+                          done();
+                        })
+                        .catch(done);
+                    },
+                  );
+                },
+              );
+            });
         });
-        it('should be backward compatible with update path providing document index', function(done){
-          request(baseUrl).get('/people/' + ids.people[0])
-            .end(function(err,res){
-              should.not.exist(err);
+        it('should be backward compatible with update path providing document index', function (done) {
+          request(baseUrl)
+            .get('/people/' + ids.people[0])
+            .end(function (err, res) {
+              if (err) return done(err);
               var body = JSON.parse(res.text);
-              var person = body.people[0];
-              patch('/people/' + person.id, [
-                {op: 'replace', path: '/people/0/nestedArray/0/nestedField1', value: 'updated'}
-              ], function(err){
-                should.not.exist(err);
-                options.app.adapter.model('person').findOne({email: person.email}, function(err, dbPerson){
+              var person = body.people[0]
+              patch(
+                '/people/' + person.id,
+                [
+                  {
+                    op: 'replace',
+                    path: '/people/0/nestedArray/0/nestedField1',
+                    value: 'updated',
+                  },
+                ],
+                function (err) {
                   should.not.exist(err);
-                  dbPerson.nestedArray[0].nestedField1.should.equal('updated');
-                  done();
-                });
-              });
+                  options.app.adapter
+                    .model('person')
+                    .findOne({ email: person.email })
+                    .then((dbPerson) => {
+                      dbPerson.nestedArray[0].nestedField1.should.equal(
+                        'updated',
+                      );
+                      done();
+                    })
+                    .catch(done);
+                },
+              );
             });
         });
       });
     });
 
-    describe("PATCH add method", function(){
-      beforeEach(function(done){
-        var cmd = [{
-          op: 'add',
-          path: '/people/0/links/houses/-',
-          value: ids.houses[0]
-        }];
+    describe('PATCH add method', function () {
+      beforeEach(function (done) {
+        var cmd = [
+          {
+            op: 'add',
+            path: '/people/0/links/houses/-',
+            value: ids.houses[0],
+          },
+        ];
         patch('/people/' + ids.people[0], cmd, done);
       });
-      it('should atomically add item to array', function(done){
-        var cmd = [{
-          op: 'add',
-          path: '/people/0/links/houses/-',
-          value: ids.houses[1]
-        }];
-        patch('/people/' + ids.people[0], cmd, function(err, res){
-          should.not.exist(err);
-          var body = JSON.parse(res.text);
-          (body.people[0].links.houses.length).should.equal(2);
-          (body.people[0].links.houses[1]).should.equal(ids.houses[1]);
-          done();
-        });
-      });
-      it('should also update related resource', function(done){
-        request(baseUrl).get('/houses/' + ids.houses[0])
-          .expect(200)
-          .end(function(err, res){
-            should.not.exist(err);
-            var body = JSON.parse(res.text);
-            (body.houses[0].links.owners[0]).should.equal(ids.people[0]);
-            done();
-          });
-      });
-      it('should support bulk update', function(done){
-        var cmd = [{
-          op: 'add',
-          path: '/people/0/links/houses/-',
-          value: ids.houses[0]
-        },{
-          op: 'add',
-          path: '/people/0/links/houses/-',
-          value: ids.houses[0]
-        }];
-        patch('/people/' + ids.people[0], cmd, function(err, res){
-          should.not.exist(err);
-          var body = JSON.parse(res.text);
-          (body.people[0].links.houses.length).should.equal(3);
-          done();
-        });
-      });
-      it('should be backward compatible with /resource/0/field syntax', function(done){
+      it('should atomically add item to array', function (done) {
         var cmd = [
-          {op: 'add', path: '/people/0/houses', value: ids.houses[1]},
+          {
+            op: 'add',
+            path: '/people/0/links/houses/-',
+            value: ids.houses[1],
+          },
         ];
-        patch('/people/' + ids.people[0], cmd, function(err, res){
+        patch('/people/' + ids.people[0], cmd, function (err, res) {
           should.not.exist(err);
           var body = JSON.parse(res.text);
           body.people[0].links.houses.length.should.equal(2);
@@ -544,11 +666,54 @@ module.exports = function(options){
           done();
         });
       });
-      it('should be backward compatible with /resource/0/field/- syntax', function(done){
+      it('should also update related resource', function (done) {
+        request(baseUrl)
+          .get('/houses/' + ids.houses[0])
+          .expect(200)
+          .end(function (err, res) {
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            body.houses[0].links.owners[0].should.equal(ids.people[0]);
+            done();
+          });
+      });
+      it('should support bulk update', function (done) {
         var cmd = [
-          {op: 'add', path: '/people/0/houses/-', value: ids.houses[1]}
+          {
+            op: 'add',
+            path: '/people/0/links/houses/-',
+            value: ids.houses[0],
+          },
+          {
+            op: 'add',
+            path: '/people/0/links/houses/-',
+            value: ids.houses[0],
+          },
         ];
-        patch('/people/' + ids.people[0], cmd, function(err, res){
+        patch('/people/' + ids.people[0], cmd, function (err, res) {
+          should.not.exist(err);
+          var body = JSON.parse(res.text);
+          body.people[0].links.houses.length.should.equal(3);
+          done();
+        });
+      });
+      it('should be backward compatible with /resource/0/field syntax', function (done) {
+        var cmd = [
+          { op: 'add', path: '/people/0/houses', value: ids.houses[1] },
+        ];
+        patch('/people/' + ids.people[0], cmd, function (err, res) {
+          should.not.exist(err);
+          var body = JSON.parse(res.text);
+          body.people[0].links.houses.length.should.equal(2);
+          body.people[0].links.houses[1].should.equal(ids.houses[1]);
+          done();
+        });
+      });
+      it('should be backward compatible with /resource/0/field/- syntax', function (done) {
+        var cmd = [
+          { op: 'add', path: '/people/0/houses/-', value: ids.houses[1] },
+        ];
+        patch('/people/' + ids.people[0], cmd, function (err, res) {
           should.not.exist(err);
           var body = JSON.parse(res.text);
           body.people[0].links.houses.length.should.equal(2);
@@ -557,27 +722,30 @@ module.exports = function(options){
         });
       });
     });
-    describe("PATCH remove method", function(){
-
+    describe('PATCH remove method', function () {
       /*
        * After this people[0] should have 3 houses
        * and three different houses should reference people[0]
        */
-      beforeEach(function(done){
-        var cmd = [{
-          op: 'add',
-          path: '/people/0/links/houses/-',
-          value: ids.houses[0]
-        },{
-          op: 'add',
-          path: '/people/0/links/houses/-',
-          value: ids.houses[1]
-        },{
-          op: 'add',
-          path: '/people/0/links/houses/-',
-          value: ids.houses[2]
-        }];
-        patch('/people/' + ids.people[0], cmd, function(err){
+      beforeEach(function (done) {
+        var cmd = [
+          {
+            op: 'add',
+            path: '/people/0/links/houses/-',
+            value: ids.houses[0],
+          },
+          {
+            op: 'add',
+            path: '/people/0/links/houses/-',
+            value: ids.houses[1],
+          },
+          {
+            op: 'add',
+            path: '/people/0/links/houses/-',
+            value: ids.houses[2],
+          },
+        ];
+        patch('/people/' + ids.people[0], cmd, function (err) {
           should.not.exist(err);
           done();
         });
@@ -585,72 +753,83 @@ module.exports = function(options){
       /*
        * After this houses[0] should have three owners
        */
-      beforeEach(function(done){
-        var cmd = [{
-          op: 'add',
-          path: '/houses/0/links/owners/-',
-          value: ids.people[1]
-        },{
-          op: 'add',
-          path: '/houses/0/links/owners/-',
-          value: ids.people[2]
-        }];
-        patch('/houses/' + ids.houses[0], cmd, function(err){
+      beforeEach(function (done) {
+        var cmd = [
+          {
+            op: 'add',
+            path: '/houses/0/links/owners/-',
+            value: ids.people[1],
+          },
+          {
+            op: 'add',
+            path: '/houses/0/links/owners/-',
+            value: ids.people[2],
+          },
+        ];
+        patch('/houses/' + ids.houses[0], cmd, function (err) {
           should.not.exist(err);
           done();
         });
       });
-      it('should atomically remove array item', function(done){
-        var cmd = [{
-          op: 'remove',
-          path: '/people/0/links/houses/' + ids.houses[0]
-        }];
-        patch('/people/' + ids.people[0], cmd, function(err, res){
+      it('should atomically remove array item', function (done) {
+        var cmd = [
+          {
+            op: 'remove',
+            path: '/people/0/links/houses/' + ids.houses[0],
+          },
+        ];
+        patch('/people/' + ids.people[0], cmd, function (err, res) {
           should.not.exist(err);
           var body = JSON.parse(res.text);
-          (body.people).should.be.an.Array;
-          (body.people[0].links.houses.length).should.equal(2);
-          (body.people[0].links.houses.indexOf(ids.houses[0])).should.equal(-1);
+          body.people.should.be.an.Array;
+          body.people[0].links.houses.length.should.equal(2);
+          body.people[0].links.houses.indexOf(ids.houses[0]).should.equal(-1);
           done();
         });
       });
-      it('should also update referenced item', function(done){
-        var cmd = [{
-          op: 'remove',
-          path: '/people/0/links/houses/' + ids.houses[0]
-        }];
-        patch('/people/' + ids.people[0], cmd, function(err){
+      it('should also update referenced item', function (done) {
+        var cmd = [
+          {
+            op: 'remove',
+            path: '/people/0/links/houses/' + ids.houses[0],
+          },
+        ];
+        patch('/people/' + ids.people[0], cmd, function (err) {
           should.not.exist(err);
-          request(baseUrl).get('/houses/' + ids.houses[0])
-            .end(function(err, res){
+          request(baseUrl)
+            .get('/houses/' + ids.houses[0])
+            .end(function (err, res) {
               should.not.exist(err);
               var body = JSON.parse(res.text);
-              (body.houses[0].links.owners.length).should.equal(2);
-              (body.houses[0].links.owners.indexOf(ids.people[0])).should.equal(-1);
+              body.houses[0].links.owners.length.should.equal(2);
+              body.houses[0].links.owners
+                .indexOf(ids.people[0])
+                .should.equal(-1);
               done();
             });
         });
       });
-      it('should support bulk operation', function(done){
-        var cmd = [{
-          op: 'remove',
-          path: '/people/0/links/houses/' + ids.houses[0]
-        },{
-          op: 'remove',
-          path: '/people/0/links/houses/' + ids.houses[1]
-        }];
-        patch('/people/' + ids.people[0], cmd, function(err, res){
+      it('should support bulk operation', function (done) {
+        var cmd = [
+          {
+            op: 'remove',
+            path: '/people/0/links/houses/' + ids.houses[0],
+          },
+          {
+            op: 'remove',
+            path: '/people/0/links/houses/' + ids.houses[1],
+          },
+        ];
+        patch('/people/' + ids.people[0], cmd, function (err, res) {
           should.not.exist(err);
           var body = JSON.parse(res.text);
-          (body.people[0].links.houses.length).should.equal(1);
+          body.people[0].links.houses.length.should.equal(1);
           done();
         });
       });
-      it('should be backward compatible with /field/value syntax', function(done){
-        var cmd = [
-          {op: 'remove', path: '/people/0/houses/' + ids.houses[0]}
-        ];
-        patch('/people/' + ids.people[0], cmd, function(err,res){
+      it('should be backward compatible with /field/value syntax', function (done) {
+        var cmd = [{ op: 'remove', path: '/people/0/houses/' + ids.houses[0] }];
+        patch('/people/' + ids.people[0], cmd, function (err, res) {
           should.not.exist(err);
           var body = JSON.parse(res.text);
           body.people[0].links.houses.length.should.equal(2);
@@ -658,34 +837,38 @@ module.exports = function(options){
         });
       });
       //helpers
-      function patch(url, cmd, cb){
-        request(baseUrl).patch(url)
+      function patch(url, cmd, cb) {
+        request(baseUrl)
+          .patch(url)
           .set('Content-Type', 'application/json')
           .send(JSON.stringify(cmd))
           .expect(200)
-          .end(function(err, res){
+          .end(function (err, res) {
             should.not.exist(err);
             cb(err, res);
           });
       }
-
     });
 
-    describe("PATCH inc method", function(){
-      it("should increment target path by provided value", function(done){
-        request(baseUrl).get("/people/" + ids.people[0])
+    describe('PATCH inc method', function () {
+      it('should increment target path by provided value', function (done) {
+        request(baseUrl)
+          .get('/people/' + ids.people[0])
           .expect(200)
-          .end(function(err, res){
+          .end(function (err, res) {
             should.not.exist(err);
             var body = JSON.parse(res.text);
             var current = body.people[0].appearances;
-            request(baseUrl).patch("/people/" + ids.people[0])
+            request(baseUrl)
+              .patch('/people/' + ids.people[0])
               .set('content-type', 'application/json')
-              .send(JSON.stringify([
-                {op: 'inc', path: '/people/0/appearances', value: 5}
-              ]))
+              .send(
+                JSON.stringify([
+                  { op: 'inc', path: '/people/0/appearances', value: 5 },
+                ]),
+              )
               .expect(200)
-              .end(function(err, res){
+              .end(function (err, res) {
                 should.not.exist(err);
                 var updated = res.body.people[0].appearances;
                 updated.should.equal(current + 5);
@@ -693,20 +876,28 @@ module.exports = function(options){
               });
           });
       });
-      it("should increment target path by 1 if value is not a valid integer", function(done){
-        request(baseUrl).get("/people/" + ids.people[0])
+      it('should increment target path by 1 if value is not a valid integer', function (done) {
+        request(baseUrl)
+          .get('/people/' + ids.people[0])
           .expect(200)
-          .end(function(err, res){
+          .end(function (err, res) {
             should.not.exist(err);
             var body = JSON.parse(res.text);
             var current = body.people[0].appearances;
-            request(baseUrl).patch("/people/" + ids.people[0])
+            request(baseUrl)
+              .patch('/people/' + ids.people[0])
               .set('content-type', 'application/json')
-              .send(JSON.stringify([
-                {op: 'inc', path: '/people/0/appearances', value: 'invalid'}
-              ]))
+              .send(
+                JSON.stringify([
+                  {
+                    op: 'inc',
+                    path: '/people/0/appearances',
+                    value: 'invalid',
+                  },
+                ]),
+              )
               .expect(200)
-              .end(function(err, res){
+              .end(function (err, res) {
                 should.not.exist(err);
                 var updated = res.body.people[0].appearances;
                 updated.should.equal(current + 1);
@@ -714,44 +905,57 @@ module.exports = function(options){
               });
           });
       });
-      it("should error if target path is not Number", function(done){
-        request(baseUrl).patch("/people/" + ids.people[0])
+      it('should error if target path is not Number', function (done) {
+        request(baseUrl)
+          .patch('/people/' + ids.people[0])
           .set('content-type', 'application/json')
-          .send(JSON.stringify([
-            {op: 'inc', path: '/people/0/name', value: 'any'}
-          ]))
+          .send(
+            JSON.stringify([
+              { op: 'inc', path: '/people/0/name', value: 'any' },
+            ]),
+          )
           .expect(500)
-          .end(function(err, res){
+          .end(function (err, res) {
             should.not.exist(err);
             var body = JSON.parse(res.text);
             body.detail.should.match(/increment with non-numeric argument/);
             done();
           });
       });
-      it("should correctly apply positional updates with $inc", function(done){
-        request(baseUrl).patch("/people/" + ids.people[0])
+      it('should correctly apply positional updates with $inc', function (done) {
+        request(baseUrl)
+          .patch('/people/' + ids.people[0])
           .set('content-type', 'application/json')
-          .send(JSON.stringify([
-            {op: 'replace', path: '/people/0/nestedArray', value: [
-              {index: 1},
-              {index: 2},
-              {index: 3}
-            ]}
-          ]))
+          .send(
+            JSON.stringify([
+              {
+                op: 'replace',
+                path: '/people/0/nestedArray',
+                value: [{ index: 1 }, { index: 2 }, { index: 3 }],
+              },
+            ]),
+          )
           .expect(200)
-          .end(function(err, res){
+          .end(function (err, res) {
             should.not.exist(err);
             var body = JSON.parse(res.text);
             var beforeInc = body.people[0].nestedArray;
             var embedId = body.people[0].nestedArray[1]._id;
 
-            request(baseUrl).patch('/people/' + ids.people[0])
+            request(baseUrl)
+              .patch('/people/' + ids.people[0])
               .set('content-type', 'application/json')
-              .send(JSON.stringify([
-                {op: 'inc', path: '/people/0/nestedArray/' + embedId + '/index', value: 3}
-              ]))
+              .send(
+                JSON.stringify([
+                  {
+                    op: 'inc',
+                    path: '/people/0/nestedArray/' + embedId + '/index',
+                    value: 3,
+                  },
+                ]),
+              )
               .expect(200)
-              .end(function(err, res){
+              .end(function (err, res) {
                 should.not.exist(err);
                 var body = JSON.parse(res.text);
                 beforeInc[1].index = 5;
@@ -762,51 +966,59 @@ module.exports = function(options){
       });
     });
 
-    describe("PUT individual route", function(){
-      it("should create document if there's no such one with provided id and update if it exists", function(done){
-        new Promise(function(resolve){
+    describe('PUT individual route', function () {
+      it("should create document if there's no such one with provided id and update if it exists", function (done) {
+        new Promise(function (resolve) {
           var doc = {
-            people: [{
-              name: "Gilbert",
-              email: "gilbert@mailbert.com"
-            }]
+            people: [
+              {
+                name: 'Gilbert',
+                email: 'gilbert@mailbert.com',
+              },
+            ],
           };
-          request(baseUrl).put("/people/gilbert@mailbert.com")
-            .set("Content-Type", "application/json")
+          request(baseUrl)
+            .put('/people/gilbert@mailbert.com')
+            .set('Content-Type', 'application/json')
             .send(JSON.stringify(doc))
-            .end(function(err, res){
+            .end(function (err, res) {
               should.not.exist(err);
-              (res.statusCode).should.equal(201);
+              res.statusCode.should.equal(201);
               resolve();
             });
-        }).then(function(){
-            var upd = {
-              people: [{
-                name: "Huilbert",
-                email: "gilbert@mailbert.com"
-              }]
-            };
-            request(baseUrl).put("/people/gilbert@mailbert.com")
-              .set("Content-Type", "application/json")
-              .send(JSON.stringify(upd))
-              .end(function(err, res){
-                should.not.exist(err);
-                (res.statusCode).should.equal(200);
-                done();
-              });
-          });
+        }).then(function () {
+          var upd = {
+            people: [
+              {
+                name: 'Huilbert',
+                email: 'gilbert@mailbert.com',
+              },
+            ],
+          };
+          request(baseUrl)
+            .put('/people/gilbert@mailbert.com')
+            .set('Content-Type', 'application/json')
+            .send(JSON.stringify(upd))
+            .end(function (err, res) {
+              should.not.exist(err);
+              res.statusCode.should.equal(200);
+              done();
+            });
+        });
       });
-      it('should update fields the client knows about and leave intact the others', function(done){
-        request(baseUrl).get('/people/dilbert@mailbert.com')
-          .end(function(err,res){
+      it('should update fields the client knows about and leave intact the others', function (done) {
+        request(baseUrl)
+          .get('/people/dilbert@mailbert.com')
+          .end(function (err, res) {
             should.not.exist(err);
             var init = JSON.parse(res.text);
             init.people[0].name.should.equal('Dilbert');
-            var upd = {people: [{appearances: 23}]};
-            request(baseUrl).put('/people/dilbert@mailbert.com')
+            var upd = { people: [{ appearances: 23 }] };
+            request(baseUrl)
+              .put('/people/dilbert@mailbert.com')
               .set('content-type', 'application/json')
               .send(JSON.stringify(upd))
-              .end(function(err, res){
+              .end(function (err, res) {
                 should.not.exist(err);
                 var body = JSON.parse(res.text);
                 body.people[0].name.should.equal('Dilbert');
@@ -816,14 +1028,15 @@ module.exports = function(options){
           });
       });
     });
-    describe('resources metadata', function(){
-      it('should be able to expose resources metadata', function(done){
-        request(baseUrl).get('/resources')
+    describe('resources metadata', function () {
+      it('should be able to expose resources metadata', function (done) {
+        request(baseUrl)
+          .get('/resources')
           .expect(200)
-          .end(function(err, res){
+          .end(function (err, res) {
             should.not.exist(err);
             var body = JSON.parse(res.text);
-            (body.resources).should.be.an.Array;
+            body.resources.should.be.an.Array;
             should.exist(body.resources[0].name);
             should.exist(body.resources[0].schema);
             should.exist(body.resources[0].route);

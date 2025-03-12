@@ -14,15 +14,13 @@
   "dependencies": {
     "body-parser": "1.19.0",
     "express": "4.17.1",
-    "i": "0.3.6",
+    "i": "0.3.7",
     "lodash": "4.17.15",
     "mkdirp": "0.5.1",
-    "mocha": "6.2.2",
-    "mongoose": "5.7.8",
+    "mongoose": "8.8.4",
     "qs": "6.9.0",
     "rsvp": "4.8.5",
     "sift": "8.5.1",
-    "supertest": "4.0.2",
     "validate.js": "0.13.1",
     "when": "3.7.8",
     "zipkin": "0.19.1"
@@ -37,13 +35,14 @@
     "eslint-plugin-mocha": "9.0.0",
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-prettier": "4.0.0",
-    "fortune-mongodb": "git+ssh://github.com/flyvictor/fortune-mongodb.git#v1.1.5",
     "husky": "4.3.8",
     "istanbul": "0.4.0",
     "lint-staged": "11.1.2",
+    "mocha": "6.2.2",
     "prettier": "2.4.1",
     "should": "13.2.3",
-    "sinon": "7.5.0"
+    "sinon": "7.5.0",
+    "supertest": "4.0.2"
   },
   "scripts": {
     "test": "node_modules/mocha/bin/mocha --recursive -R spec --timeout 8000",

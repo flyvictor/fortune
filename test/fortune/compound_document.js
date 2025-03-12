@@ -283,7 +283,7 @@ module.exports = function(options){
         request(baseUrl)
           .post("/remove-pets-link/" + ids.people[0])
           .end(function(err) {
-            should.not.exist(err);
+            if (err) return done(err);
             done();
           });
       });
