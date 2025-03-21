@@ -12,7 +12,7 @@ var hooks = {};
     config: {
       option: type
     },
-    init: function(hookOptions, fortuneOptions){
+    init: function(hookOptions){
       return function(req, res){
         res.setHeader(hookOptions.option, '1');
 
@@ -37,12 +37,46 @@ var hooks = {};
   }]
 });
 
-var Hook = function(hookConfig, fortuneConfig){
+var Hook = function(hookConfig){
   return function(req, res){
     res.setHeader(hookConfig.header, hookConfig.value);
     return this;
   }
 };
+
+function HooksOrderExecutionInitFactory(app, resourceName) {
+  return function() {
+    return async function (req, res) {
+      if (req.method !== 'POST') return this;
+      if (req.get('compound-post-hooks-order-test') !== '1') return this;
+
+      let person, pet;
+      if (resourceName === 'person') {
+        person = await app.adapter.model('person').findOne({
+          email: this.email,
+        });
+        pet = await app.adapter.model('pet').findOne({
+          _id: this.links.pets[0]
+        });
+      } else {
+        person = await app.adapter.model('person').findOne({
+          pets: {$in: [this.id]}
+        });
+        pet = await app.adapter.model('pet').findOne({
+          _id: this.id
+        });
+      }
+
+      res.set(`compound-post-hooks-order-${resourceName}-passed`, '0');
+      if (!!person && !!pet) {
+        res.set(`compound-post-hooks-order-${resourceName}-passed`, '1');
+      }
+
+      return this;
+    }
+  }
+}
+
 
 module.exports = function(options, port) {
   var app = fortune(options);
@@ -83,7 +117,7 @@ module.exports = function(options, port) {
     .beforeWrite([{
       name: 'todb',
       init: function() {
-        return function(req, res){
+        return function(){
           return this;
         }
       }
@@ -91,7 +125,7 @@ module.exports = function(options, port) {
     .afterRead([{
       name: 'fromdb',
       init: function(){
-        return function(req, res){
+        return function(){
           return this;
         }
       }
@@ -155,7 +189,7 @@ module.exports = function(options, port) {
     .beforeRead([{
       name: 'modifyFilter',
       init: function(){
-        return function(req, res){
+        return function(req){
           if (req.headers['hookfilter']){
             req.query.filter = {};
             req.query.filter.id = req.headers['hookfilter'];
@@ -193,6 +227,10 @@ module.exports = function(options, port) {
         }
       }
     }])
+    .afterWrite([{
+      name: "compound-post-hooks-order-test",
+      init: HooksOrderExecutionInitFactory(app, 'person'),
+    }])
     .beforeWrite([{
       name: "change-nested-$set",
       init: function(){
@@ -208,7 +246,7 @@ module.exports = function(options, port) {
     .afterWrite([{
       name: "throw-error",
       init: function(){
-        return function(req, res){
+        return function(req){
           if (req.headers['throw-after-write-error']) {
             throw Error('after write error');
           }
@@ -231,7 +269,6 @@ module.exports = function(options, port) {
         header: 'beforeReadSecond'
       }
     })
-
     .resource('house', {
       address: String,
       owners: [{ref: 'person', inverse: 'houses', pkType: String}],
@@ -247,6 +284,10 @@ module.exports = function(options, port) {
     },{
       defaultSort:{ appearances: 1 }
     })
+    .afterWrite([{
+      name: "compound-post-hooks-order-test",
+      init: HooksOrderExecutionInitFactory(app, 'pet'),
+    }])
 
     .resource('address', {
       name: String,
@@ -367,8 +408,8 @@ module.exports = function(options, port) {
 
     .beforeResponseSend('person', [{
       name: 'before-response',
-      init: function(options){
-        return function(req, res){
+      init: function(){
+        return function(req){
           var body = this;
           if (req.headers['apply-before-response-send']){
             req.headers['apply-before-response-send']++;
@@ -387,8 +428,8 @@ module.exports = function(options, port) {
 
     .beforeErrorResponseSend('person', [{
       name: 'before-error-response',
-      init: function(options){
-        return function(req, res){
+      init: function(){
+        return function(req){
           var body = this;
           if (req.headers['apply-before-error-response-send']){
             req.headers['apply-before-error-response-send']++;
@@ -426,7 +467,7 @@ module.exports = function(options, port) {
     }])
     .listen(port);
 
-  app.addHookFilter(function(hooks, resourceName, when, type, resource){
+  app.addHookFilter(function(hooks){
     return _.filter(hooks, function(h){
       return h.name !== 'filtered-out';
     });
@@ -443,7 +484,7 @@ module.exports = function(options, port) {
   app.addMetadataProvider({
     key: 'ping',
     init: function(){
-      return function(req, res){
+      return function(){
         return 'pong';
       }
     }
@@ -470,7 +511,7 @@ module.exports = function(options, port) {
   app.addMetadataProvider({
     key: 'sins',
     init: function(){
-      return function(req, res){
+      return function(req){
         var resource = req.path.split('/')[1];
         if (resource !== 'people') return [];
         return _.map(this[resource], function(item){

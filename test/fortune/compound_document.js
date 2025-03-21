@@ -1,4 +1,3 @@
-var inflect= require('i')();
 var should = require('should');
 var _ = require('lodash');
 var RSVP = require('rsvp');
@@ -178,7 +177,7 @@ module.exports = function(options){
             .set('content-type', 'application/json')
             .send(JSON.stringify([
               {op: 'add', path: '/people/0/links/addresses/-', value: address}
-            ])).end(function(err, res){
+            ])).end(function(err){
               should.not.exist(err);
               resolve();
             })
@@ -336,7 +335,7 @@ module.exports = function(options){
           .expect(200)
           .end(function(err, res){
             if (err) return done(err);
-            
+
             var body = JSON.parse(res.text);
             (body.pets.length).should.equal(1);
             (body.pets[0].name).should.equal("Lumpy");
@@ -387,7 +386,7 @@ module.exports = function(options){
           .set("content-type", "application/json")
           .send(JSON.stringify(data))
           .expect(321)
-          .end(function(err, res){
+          .end(function(err){
             should.not.exist(err);
             done();
           });
@@ -605,6 +604,31 @@ module.exports = function(options){
             done();
           });
       });
+      it('should keep predictable order of the hooks ', function(done) {
+        request(baseUrl).post('/people')
+          .set('content-type', 'application/json')
+          .set('compound-post-hooks-order-test', '1')
+          .send(JSON.stringify({
+            people: [{
+              email: "thorin@dwarf.com",
+              links: {
+                pets: [1]
+              }
+            }],
+            linked: {
+              pets: [{
+                id: 1,
+                name: 'a pet'
+              }]
+            }
+          }))
+          .end(function(err, res){
+            should.not.exist(err);
+            res.get('compound-post-hooks-order-person-passed').should.equal('1');
+            res.get('compound-post-hooks-order-pet-passed').should.equal('1');
+            done();
+          });
+      })
     });
   });
 

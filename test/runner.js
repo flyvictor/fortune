@@ -1,4 +1,3 @@
-var inflect = require('i')();
 var should = require('should');
 var _ = require('lodash');
 var RSVP = require('rsvp');
@@ -75,7 +74,7 @@ describe('Fortune test runner', function () {
               res.send(500, err);
               return;
             });
-          
+
         });
       })
       .then(done)
