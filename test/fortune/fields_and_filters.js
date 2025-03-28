@@ -697,6 +697,29 @@ module.exports = function(options){
           });
       });
 
+
+      it('should be possible to sort by name desc as an object with number direction', function(done){
+        request(baseUrl).get('/people?sort[name]=1')
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            _.map(body.people, "name").should.eql(["Wally", "Sally", "Robert", "Dilbert"]);
+            done();
+          });
+      });
+
+      it('should be possible to sort by name desc as an object with asc/desc direction', function(done){
+        request(baseUrl).get('/people?sort[name]=desc')
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            _.map(body.people, "name").should.eql(["Wally", "Sally", "Robert", "Dilbert"]);
+            done();
+          });
+      });
+
       it('should be possible to sort by appearances', function(done){
         request(baseUrl).get('/people?sort=appearances')
           .expect(200)
