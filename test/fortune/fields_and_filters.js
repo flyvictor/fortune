@@ -699,7 +699,7 @@ module.exports = function(options){
 
 
       it('should be possible to sort by name desc as an object with number direction', function(done){
-        request(baseUrl).get('/people?sort[name]=1')
+        request(baseUrl).get('/people?sort[name]=-1')
           .expect(200)
           .end(function(err, res){
             should.not.exist(err);
