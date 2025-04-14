@@ -112,6 +112,37 @@ module.exports = function(options){
             done();
           });
       });
+
+      it("should not treat top-resource ?fields as linked resource ?fields", function(done){
+        request(baseUrl).get('/people/' + ids.people[0] + '?include=pets&fields=name,pets')
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            should.exist(body.linked.pets[0].appearances);
+            should.exist(body.linked.pets[0].name);
+
+            should.exist(body.people[0].name);
+            should.not.exist(body.people[0].email);
+            done();
+          });
+      });
+
+      it("should include linked resource even if link field is not requested in fields", function(done){
+        request(baseUrl).get('/people/' + ids.people[0] + '?include=pets&fields=name')
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end(function(err, res){
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            should.exist(body.linked.pets[0]);
+
+            should.exist(body.people[0].name);
+            should.not.exist(body.people[0].email);
+            done();
+          });
+      });
     });
 
     describe("filters", function(){
