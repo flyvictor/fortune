@@ -65,7 +65,7 @@ describe('Fortune', function () {
   });
 
   describe("Init", function() {
-    it("should pass 'debug' option to underlying adapter", function(done) {
+    it("should pass 'debug' option to underlying adapter", function() {
       var remoteDB = process.env.WERCKER_MONGODB_URL ? process.env.WERCKER_MONGODB_URL + '/fortune' : null;
       var app = fortune({
         adapter: 'mongodb',
@@ -74,9 +74,8 @@ describe('Fortune', function () {
         inflect: true
       });
 
-      app.adapter.mongoose.options.debug.should.equal(true);
-      app.adapter.mongoose.options.debug = false; // Set the global variable back to not log all requests in test env
-      done();
+      app.adapter.db.options.debug.should.equal(true);
+      app.adapter.db.options.debug = false; // Set the global variable back to not log all requests in test env
     });
   });
 });

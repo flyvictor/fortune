@@ -1,229 +1,338 @@
-var should = require('should');
-var RSVP = require('rsvp');
-var hooks = require('../lib/hooks');
-var crypto = require('crypto');
+const should = require('should');
+const hooks = require('../lib/hooks');
+const fortune = require('../lib/fortune');
 
-var synchronousHook = [{
-  name: 'syncHook',
-  config: {
-    a: 10
+const synchronousHook = [
+  {
+    name: 'syncHook',
+    config: {
+      a: 10,
+    },
+    init: function (hookConfig, fortuneConfig) {
+      const a = hookConfig.a;
+      const b = (fortuneConfig.options && fortuneConfig.options.b) || 100;
+      return function (req, res) {
+        this.hooked = a + b;
+        return this;
+      };
+    },
   },
-  init: function(hookConfig, fortuneConfig){
-    var a = hookConfig.a;
-    var b = (fortuneConfig.options && fortuneConfig.options.b) || 100;
-    return function(req, res){
-      this.hooked = a + b;
-      return this;
-    }
-  }
-}];
+];
 
-describe('hooks', function(){
-  it('should keep track of registered hooks', function(done){
-    hooks.registerGlobalHook('_before', 'read', synchronousHook);
-    should.exist(hooks.hooksAll._before.read[0]);
-    done();
-  });
-  it('should be able to extend global hook config along with registration', function(done){
-    hooks.registerGlobalHook('_after', 'write', synchronousHook, {syncHook: {a: 500}});
-    synchronousHook[0].config.a.should.equal(10);
-    var resourceConfig = {};
-    hooks.initGlobalHooks(resourceConfig, {});
-    resourceConfig.hooks._after.write[0].fn.call({}).should.eql({hooked: 600});
-    done();
-  });
-  it('inline config should not break default hook configuration', function(done){
-    hooks.registerGlobalHook('_after', 'write', synchronousHook, {syncHook: {a: 500}});
-    synchronousHook[0].config.a.should.equal(10);
-    hooks.registerGlobalHook('_before', 'read', synchronousHook, {syncHook: {a: 600}});
-    synchronousHook[0].config.a.should.equal(10);
-    done();
-  });
-  it('should be able to apply registered hooks to provided resource', function(done){
-    hooks.registerGlobalHook('_before', 'read', synchronousHook);
-    var resourceConfig = {};
-    hooks.initGlobalHooks(resourceConfig, {});
-    should.exist(resourceConfig.hooks);
-    (resourceConfig.hooks._before.read[0]).fn.should.be.a.Function;
-    done();
-  });
-  it('should be configurable', function(done){
-    hooks.registerGlobalHook('_before', 'read', synchronousHook);
-    var resourceConfig = {
-      hooksOptions: {
-        syncHook: {
-          a: 1
-        }
-      }
-    };
-    var resource = {};
-    hooks.initGlobalHooks(resourceConfig, {options: {b: 2}});
-    resourceConfig.hooks._before.read[0].fn.call(resource);
-    (resource.hooked).should.equal(3);
-    done();
-  });
-  it('should be possible to disable specific hook in resource config', function(done){
-    hooks.registerGlobalHook('_before', 'read', synchronousHook);
-    var resourceConfig = {
-      hooksConfig: {
-        syncHook: {
-          disable:  true
-        }
-      }
-    };
-    hooks.initGlobalHooks(resourceConfig, {});
-    should.not.exist(resourceConfig.hooks[0]);
-    done();
-  });
-  it('should apply default hook config if resource does not provide one', function(done){
-    hooks.registerGlobalHook('_before', 'read', synchronousHook);
-    var resourceConfig = {};
-    var resource = {};
-    hooks.initGlobalHooks(resourceConfig, {});
-    should.exist(resourceConfig.hooks._before.read[0]);
-    resourceConfig.hooks._before.read[0].fn.call(resource);
-    (resource.hooked).should.equal(110);
-    done();
-  });
-  it('warning should not affect other hooks', function(done){
-    var fortune = {
+describe('hooks', function () {
+  it('warning should not affect other hooks', function (done) {
+    const fortune = {
       _resources: {
-        defined: {}
+        defined: {},
       },
-      options: {}
+      options: {},
     };
-    (function(){
-      hooks.addHook.call(fortune, 'undefined defined', synchronousHook, '_before', 'read');
-    }).should.not.throw();
+    (function () {
+      hooks.addHook.call(
+        fortune,
+        'undefined defined',
+        synchronousHook,
+        '_before',
+        'read',
+      );
+    }.should.not.throw());
     should.exist(fortune._resources.defined.hooks._before.read);
     done();
   });
-  describe('integration with fortune', function(){
-    var fortune;
-    beforeEach(function(){
-      fortune = {
-        _resource: "person",
-        _resources: {
-          person: {
-            hooksOptions: {
-              syncHook:{
-                a: 1
-              }
-            }
-          },
-          pet: {}
+  describe('integration with fortune', function () {
+    let app;
+    beforeEach(function () {
+      app = fortune({ adapter: 'mongodb', b: 2 });
+
+      app.resource(
+        'person',
+        {
+          name: String,
         },
-        options: {
-          b: 2
-        }
+        {
+          hooks: {
+            syncHook: {
+              a: 1,
+            },
+          },
+        },
+      );
+
+      app.resource(
+        'pet',
+        {
+          name: String,
+        },
+        {
+          hooks: {},
+        },
+      );
+    });
+    afterEach(function () {
+      app._clearGlobalHooks();
+    });
+
+    it('should keep track of registered global hooks', function () {
+      app.registerGlobalHook('_before', 'read', synchronousHook);
+      should.exist(app._globalHooks._before.read[0]);
+    });
+
+    it('should be able to extend global hook config along with registration', function () {
+      app.registerGlobalHook('_after', 'write', synchronousHook, {
+        syncHook: { a: 500 },
+      });
+      synchronousHook[0].config.a.should.equal(10);
+      const resourceConfig = {};
+      hooks.initGlobalHooks(resourceConfig, app._globalHooks, {});
+      resourceConfig.hooks._after.write[0].fn
+        .call({})
+        .should.eql({ hooked: 600 });
+    });
+
+    it('inline config should not break default hook configuration', function () {
+      app.registerGlobalHook('_after', 'write', synchronousHook, {
+        syncHook: { a: 500 },
+      });
+      synchronousHook[0].config.a.should.equal(10);
+      app.registerGlobalHook('_before', 'read', synchronousHook, {
+        syncHook: { a: 600 },
+      });
+      synchronousHook[0].config.a.should.equal(10);
+    });
+
+    it('should be able to apply registered hooks to provided resource', function () {
+      app.registerGlobalHook('_before', 'read', synchronousHook);
+      const resourceConfig = {};
+      hooks.initGlobalHooks(resourceConfig, app._globalHooks, {});
+      should.exist(resourceConfig.hooks);
+      resourceConfig.hooks._before.read[0].fn.should.be.a.Function;
+    });
+
+    it('should be configurable', function () {
+      app.registerGlobalHook('_before', 'read', synchronousHook);
+      const resourceConfig = {
+        hooksOptions: {
+          syncHook: {
+            a: 1,
+          },
+        },
       };
+      const resource = {};
+      hooks.initGlobalHooks(resourceConfig, app._globalHooks, {
+        options: { b: 2 },
+      });
+      resourceConfig.hooks._before.read[0].fn.call(resource);
+      resource.hooked.should.equal(3);
     });
-    afterEach(function(){
-      hooks._clearGlobalHooks();
-    });
-    it('should provide method to register a hook for selected resource', function(done){
-      hooks.addHook.call(fortune, 'person', synchronousHook, '_after', 'read');
-      (fortune._resources.person.hooks._after.read.length).should.equal(1);
+
+    it('should be possible to disable specific hook in resource config', function (done) {
+      app.registerGlobalHook('_before', 'read', synchronousHook);
+      const resourceConfig = {
+        hooksConfig: {
+          syncHook: {
+            disable: true,
+          },
+        },
+      };
+      hooks.initGlobalHooks(resourceConfig, app._globalHooks, {});
+      should.not.exist(resourceConfig.hooks[0]);
       done();
     });
-    it('should be backward compatible', function(done){
-      var mockHook = function(req, res){
+    it('should apply default hook config if resource does not provide one', function (done) {
+      app.registerGlobalHook('_before', 'read', synchronousHook);
+      const resourceConfig = {};
+      const resource = {};
+      hooks.initGlobalHooks(resourceConfig, app._globalHooks, {});
+      should.exist(resourceConfig.hooks._before.read[0]);
+      resourceConfig.hooks._before.read[0].fn.call(resource);
+      resource.hooked.should.equal(110);
+      done();
+    });
+
+    it('should provide method to register a hook for selected resource', function () {
+      hooks.addHook.call(app, 'person', synchronousHook, '_after', 'read');
+      should.exists(
+        app._resources.person.hooks._after.read.find(
+          (el) => el.name === 'syncHook',
+        ),
+      );
+    });
+
+    it('should be backward compatible', function () {
+      const mockHook = function (req, res) {
         return 'Hello world';
       };
-      hooks.addHook.call(fortune, 'person', mockHook, '_before', 'write');
-      var generatedHook = fortune._resources.person.hooks._before.write[0].fn;
+      hooks.addHook.call(app, 'person', mockHook, '_before', 'write');
+
+      const beforeWriteLength =
+        app._resources.person.hooks._before.write.length;
+      const generatedHook =
+        app._resources.person.hooks._before.write[beforeWriteLength - 1].fn;
+
       should.exist(generatedHook);
-      (generatedHook()).should.equal('Hello world');
-      done();
+      generatedHook().should.equal('Hello world');
     });
-    it('should be possible to provide space-separated names of resources to apply hooks to', function(done){
-      hooks.addHook.call(fortune, 'person pet', synchronousHook, '_after', 'write');
-      var personHook = fortune._resources.person.hooks._after.write[0].fn;
-      var petHook = fortune._resources.pet.hooks._after.write[0].fn;
+    it('should be possible to provide space-separated names of resources to apply hooks to', function () {
+      hooks.addHook.call(app, 'person pet', synchronousHook, '_after', 'write');
+
+      const personHook = app._resources.person.hooks._after.write.find(
+        (el) => el.name === 'syncHook',
+      );
+      const petHook = app._resources.pet.hooks._after.write.find(
+        (el) => el.name === 'syncHook',
+      );
+
       should.exist(personHook);
       should.exist(petHook);
-      var person = {};
-      personHook.call(person);
+
+      const person = {};
+      personHook.fn.call(person);
       //Options are defined in hook config and fortune config
-      (person.hooked).should.equal(3);
-      var pet = {};
-      petHook.call(pet);
+      person.hooked.should.equal(3);
+      const pet = {};
+      petHook.fn.call(pet);
       //Options are defined only in fortune config
-      (pet.hooked).should.equal(12);
-      done();
+      pet.hooked.should.equal(12);
     });
-    it('hooks should be provided with full fortune instance', function(done){
-      var mock = [{
-        name: "mock",
-        init: function(config, fortune){
-          should.exist(fortune);
-          (fortune._resource).should.equal('person');
-          (fortune._resources).should.be.an.Object;
-          done();
-          //Hook must return a function
-          return function(){}
-        }
-      }];
-      hooks.addHook.call(fortune, 'person', mock, '_after', 'write');
-    });
-    it('should expose hook options on resources for global hooks', function(){
-      var fn = function(){return this;};
-      var hook = [{
-        name: 'hook-name',
-        config: {whatever: 'is here'},
-        init: function(){ return fn; }
-      }];
-      hooks.registerGlobalHook('_after', 'write', hook);// = function(when, type, provider, config){.call(fortune, )
-      hooks.initGlobalHooks(fortune._resources.person, {});
-      fortune._resources.person.hooks.should.eql({
-        "_after": {
-          "read": [],
-          "write": [
-            {
-              _priority: 0,
-              name: 'hook-name',
-              fn: fn,
-              options: {whatever: 'is here'}
-            }]
+    it('hooks should be provided with full fortune instance', function (done) {
+      const mock = [
+        {
+          name: 'mock',
+          init: function (config, fortune) {
+            should.exist(fortune);
+            fortune._resource.should.equal('pet');
+            fortune._resources.should.be.an.Object;
+            done();
+            //Hook must return a function
+            return function () {};
+          },
         },
-        "_before": {
-          "read": [],
-          "write": []
-        }
+      ];
+
+      try {
+        hooks.addHook.call(app, 'person', mock, '_after', 'write');
+      } catch (e) {
+        done(e);
+      }
+    });
+    it('should expose hook options on resources for registered global hooks', function () {
+      const fn = function () {
+        return this;
+      };
+      const hook = [
+        {
+          name: 'hook-name',
+          config: { whatever: 'is here' },
+          init: function () {
+            return fn;
+          },
+        },
+      ];
+      app = fortune({ adapter: 'mongodb', b: 2 });
+
+      app.registerGlobalHook('_after', 'write', hook); // = function(when, type, provider, config){.call(fortune, )
+
+      app.resource(
+        'person',
+        {
+          name: String,
+        },
+        {
+          hooks: {
+            syncHook: {
+              a: 1,
+            },
+          },
+        },
+      );
+
+      app.resource(
+        'pet',
+        {
+          name: String,
+        },
+        {
+          hooks: {},
+        },
+      );
+
+      const personGlobalHook = app._resources.person.hooks._after.write.find(
+        (el) => el.name === 'hook-name',
+      );
+      personGlobalHook.should.eql({
+        _priority: 0,
+        name: 'hook-name',
+        fn: fn,
+        options: { whatever: 'is here' },
+      });
+
+      const petGlobalHook = app._resources.person.hooks._after.write.find(
+        (el) => el.name === 'hook-name',
+      );
+      petGlobalHook.should.eql({
+        _priority: 0,
+        name: 'hook-name',
+        fn: fn,
+        options: { whatever: 'is here' },
       });
     });
-    it('should expose hook options on resources for resource-specific hooks', function(){
-      var fn = function(){return this;};
-      var hook = [{
-        name: 'hook-name',
-        config: {whatever: 'is here'},
-        init: function(){
-          return fn
-        }
-      }];
-      hooks.addHook.call(fortune, 'person', hook, '_after', 'write');
-      fortune._resources.person.hooks.should.eql({
-        _after: {
-          write: [{
-            _priority: 0,
-            name: 'hook-name',
-            fn: fn,
-            options: {whatever: 'is here'}
-          }]
-        }
+    it('should expose hook options on resources for resource-specific hooks', function () {
+      const fn = function () {
+        return this;
+      };
+      const hook = [
+        {
+          name: 'hook-name',
+          config: { whatever: 'is here' },
+          init: function () {
+            return fn;
+          },
+        },
+      ];
+      hooks.addHook.call(app, 'person', hook, '_after', 'write');
+
+      app._resources.person.hooks._after.write.find(
+        (el) => el.name === 'hook-name',
+      ).should.eql({
+          _priority: 0,
+          name: 'hook-name',
+          fn: fn,
+          options: { whatever: 'is here' },
+        
       });
+
+      should.not.exist(app._resources.pet.hooks._after.write.find(
+        (el) => el.name === 'hook-name',
+      ));
     });
   });
-  describe("merge", function() {
-    it("should merge hooks tree with absent leafs", function() {
-      var hookSet = [
-        {"_before":{"write":[{"name":"hook1"}, {"name":"hook2"}, {"name":"hook3"}]},
-          "_after":{"read":[{"name":"hook4"}], "write":[{"name":"hook5"}]}},
-        { "_before": { "write": [{ "name": "hook6" }], "read": [{ "name": "hook7" }] }}
-      ]
 
-      hooks.merge(hookSet).should.eql({"_after":{"read":[{"name":"hook4"}], "write":[{"name":"hook5"}]},
-        "_before":{"read":[{"name":"hook7"}],"write":[{"name":"hook1"}, {"name":"hook2"}, {"name":"hook3"}, {"name":"hook6"}]}});
+  describe('merge', function () {
+    it('should merge hooks tree with absent leafs', function () {
+      const hookSet = [
+        {
+          _before: {
+            write: [{ name: 'hook1' }, { name: 'hook2' }, { name: 'hook3' }],
+          },
+          _after: { read: [{ name: 'hook4' }], write: [{ name: 'hook5' }] },
+        },
+        { _before: { write: [{ name: 'hook6' }], read: [{ name: 'hook7' }] } },
+      ];
+
+      hooks
+        .merge(hookSet)
+        .should.eql({
+          _after: { read: [{ name: 'hook4' }], write: [{ name: 'hook5' }] },
+          _before: {
+            read: [{ name: 'hook7' }],
+            write: [
+              { name: 'hook1' },
+              { name: 'hook2' },
+              { name: 'hook3' },
+              { name: 'hook6' },
+            ],
+          },
+        });
     });
   });
 });
