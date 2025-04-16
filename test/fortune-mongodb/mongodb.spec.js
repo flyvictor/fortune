@@ -3,17 +3,17 @@ const sinon = require('sinon');
 const request = require('supertest');
 const RSVP = require('rsvp');
 
-const adapter = require('../../lib/adapters/mongodb');
-
 const _ = require('lodash');
 
 module.exports = function (options) {
+
   describe('MongoDB adapter', function () {
-    let ids, baseUrl;
+    let adapter, ids, baseUrl;
 
     beforeEach(function () {
       baseUrl = options.baseUrl;
       ids = options.ids;
+      adapter = options.app.adapter;
     });
 
     describe('Creation', function () {
@@ -136,6 +136,7 @@ module.exports = function (options) {
         let originalModels;
         beforeEach(function () {
           originalModels = adapter._models;
+          
           sinon.stub(adapter, '_getInverseReferences');
           sinon.stub(adapter, '_updateOneToOne').returns(RSVP.resolve());
           sinon.stub(adapter, '_updateOneToMany').returns(RSVP.resolve());
