@@ -1,0 +1,80 @@
+[
+  {
+    "_id": { "$oid": "68713bb9d8a62cfa09ce8012" },
+    "firstName": "Alice",
+    "lastName": "Smith",
+    "middleName": "Marie",
+    "dateOfBirth": { "$date": "1990-04-15T00:00:00Z" },
+    "gender": "female",
+    "email": "alice.smith@example.com",
+    "phone": "+14155552671",
+    "address": {
+      "street": "123 Main St",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94105",
+      "country": "USA"
+    },
+    "nationality": "American",
+    "maritalStatus": "single",
+    "occupation": "Software Engineer",
+    "employer": "TechCorp",
+    "salary": 120000,
+    "isActive": true,
+    "createdAt": { "$date": "2023-01-01T10:00:00Z" },
+    "updatedAt": { "$date": "2023-06-01T12:00:00Z" },
+    "password": "securePa$$word123"
+  },
+  {
+    "_id": { "$oid": "68713bb9d8a62cfa09ce8013" },
+    "firstName": "Bob",
+    "lastName": "Johnson",
+    "middleName": "Edward",
+    "dateOfBirth": { "$date": "1985-10-30T00:00:00Z" },
+    "gender": "male",
+    "email": "bob.johnson@example.com",
+    "phone": "+442079460000",
+    "address": {
+      "street": "456 King Rd",
+      "city": "London",
+      "state": "",
+      "zip": "SW1A 1AA",
+      "country": "UK"
+    },
+    "nationality": "British",
+    "maritalStatus": "married",
+    "occupation": "Product Manager",
+    "employer": "RetailCo",
+    "salary": 95000,
+    "isActive": true,
+    "createdAt": { "$date": "2022-05-10T09:30:00Z" },
+    "updatedAt": { "$date": "2023-07-10T08:15:00Z" },
+    "password": "bobSecure2024"
+  },
+  {
+    "_id": { "$oid": "68713bb9d8a62cfa09ce8014" },
+    "firstName": "Charlie",
+    "lastName": "Nguyen",
+    "middleName": "",
+    "dateOfBirth": { "$date": "1995-07-20T00:00:00Z" },
+    "gender": "other",
+    "email": "charlie.nguyen@example.com",
+    "phone": "+61293744000",
+    "address": {
+      "street": "789 Harbour St",
+      "city": "Sydney",
+      "state": "NSW",
+      "zip": "2000",
+      "country": "Australia"
+    },
+    "nationality": "Australian",
+    "maritalStatus": "single",
+    "occupation": "UX Designer",
+    "employer": "DesignStudio",
+    "salary": 80000,
+    "isActive": false,
+    "createdAt": { "$date": "2021-09-15T14:45:00Z" },
+    "updatedAt": { "$date": "2023-05-20T11:00:00Z" },
+    "password": "charliePass!2025"
+  }
+]

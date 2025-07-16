@@ -1,0 +1,77 @@
+services:
+  test-app:
+    image: test-app
+    build:
+      context: ./test-app
+      dockerfile: ./Dockerfile
+    entrypoint:
+      - node
+      - index.js
+    networks:
+      - app-network
+      - db-network
+    ports:
+      - 4000:4000
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1024M
+        reservations:
+          cpus: '1'
+          memory: 1024M
+      
+  mongodb:
+    image: mongo:8.0.3
+    ports:
+      - 27017:27017
+    networks:
+      - db-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1024M
+        reservations:
+          cpus: '1'
+          memory: 1024M
+
+  mongo-seed:
+    build: 
+      context: ./mongo-seed
+      dockerfile: ./Dockerfile
+    depends_on:
+      - mongodb
+    networks:
+      - db-network
+  
+  test-performances-runner:
+    build: 
+      context: ./scripts
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./scripts:/scripts
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /scripts
+    networks:
+      - app-network
+      - db-network
+    environment:
+      MONGO_DB_URL: mongodb://mongodb:27017
+      TEST_APP_URL: http://test-app:4000
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2048M
+        reservations:
+          cpus: '2'
+          memory: 2048M
+
+networks:
+  app-network:
+    driver: bridge
+    name: app-network
+  db-network:
+    driver: bridge
+    name: db-network

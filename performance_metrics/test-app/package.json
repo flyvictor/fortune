@@ -1,0 +1,15 @@
+{
+  "name": "test-app",
+  "description": "Test app for perfomance metrics.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "dependencies": {
+    "express": "4.17.1",
+    "fortune": "github:flyvictor/fortune#v1.31.4",
+    "lodash": "4.17.15",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=18.12.0"
+  }
+}

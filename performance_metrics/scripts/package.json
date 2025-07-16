@@ -1,0 +1,16 @@
+{
+  "name": "test-app",
+  "description": "Test app for perfomance metrics.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "dependencies": {
+    "autocannon": "^8.0.0",
+    "clinic": "^13.0.0",
+    "dockerode": "^4.0.7",
+    "minimist": "^1.2.8",
+    "mongodb": "^6.17.0"
+  },
+  "engines": {
+    "node": ">=18.12.0"
+  }
+}
