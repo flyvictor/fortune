@@ -45,13 +45,14 @@ services:
     networks:
       - db-network
   
-  scripts-runner:
-    image: node:24-alpine
+  test-performances-runner:
+    build: 
+      context: ./scripts
+      dockerfile: ./Dockerfile
     volumes:
       - ./scripts:/scripts
       - /var/run/docker.sock:/var/run/docker.sock
     working_dir: /scripts
-    entrypoint: ["node", "test-performance-metrics.js"]
     networks:
       - app-network
       - db-network
