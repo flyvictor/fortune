@@ -1,0 +1,84 @@
+[
+  {
+    "_id": { "$oid": "68713c09d8a62cfa09ce8020" },
+    "name": "Buddy",
+    "type": "dog",
+    "breed": "Golden Retriever",
+    "age": 3,
+    "owner": { "$oid": "68713bb9d8a62cfa09ce8012" },
+    "createdAt": { "$date": "2023-01-01T10:00:00Z" },
+    "updatedAt": { "$date": "2023-06-01T12:00:00Z" },
+    "documents": [
+      { "$oid": "64b5e7d6a1c9d1a100000001" },
+      { "$oid": "64b5e7d6a1c9d1a100000007" }
+    ]
+  },
+  {
+    "_id": { "$oid": "68713c09d8a62cfa09ce8021" },
+    "name": "Whiskers",
+    "type": "cat",
+    "breed": "Siamese",
+    "age": 2,
+    "owner": { "$oid": "68713bb9d8a62cfa09ce8012" },
+    "createdAt": { "$date": "2023-01-01T10:00:00Z" },
+    "updatedAt": { "$date": "2023-06-01T12:00:00Z" },
+    "documents": [
+      { "$oid": "64b5e7d6a1c9d1a100000002" },
+      { "$oid": "64b5e7d6a1c9d1a100000008" }
+    ]
+  },
+  {
+    "_id": { "$oid": "68713c09d8a62cfa09ce8022" },
+    "name": "Rex",
+    "type": "dog",
+    "breed": "Bulldog",
+    "age": 4,
+    "owner": { "$oid": "68713bb9d8a62cfa09ce8012" },
+    "createdAt": { "$date": "2023-01-01T10:00:00Z" },
+    "updatedAt": { "$date": "2023-06-01T12:00:00Z" },
+    "documents": [
+      { "$oid": "64b5e7d6a1c9d1a100000003" },
+      { "$oid": "64b5e7d6a1c9d1a100000009" }
+    ]
+  },
+  {
+    "_id": { "$oid": "68713c09d8a62cfa09ce8023" },
+    "name": "Milo",
+    "type": "dog",
+    "breed": "Beagle",
+    "age": 1,
+    "owner": { "$oid": "68713bb9d8a62cfa09ce8013" },
+    "createdAt": { "$date": "2022-05-10T09:30:00Z" },
+    "updatedAt": { "$date": "2023-07-10T08:15:00Z" },
+    "documents": [
+      { "$oid": "64b5e7d6a1c9d1a100000004" },
+      { "$oid": "64b5e7d6a1c9d1a10000000a" }
+    ]
+  },
+  {
+    "_id": { "$oid": "68713c09d8a62cfa09ce8024" },
+    "name": "Luna",
+    "type": "cat",
+    "breed": "British Shorthair",
+    "age": 5,
+    "owner": { "$oid": "68713bb9d8a62cfa09ce8013" },
+    "createdAt": { "$date": "2022-05-10T09:30:00Z" },
+    "updatedAt": { "$date": "2023-07-10T08:15:00Z" },
+    "documents": [
+      { "$oid": "64b5e7d6a1c9d1a100000005" }
+    ]
+  },
+  {
+    "_id": { "$oid": "68713c09d8a62cfa09ce8025" },
+    "name": "Chirpy",
+    "type": "bird",
+    "breed": "Parakeet",
+    "age": 2,
+    "owner": { "$oid": "68713bb9d8a62cfa09ce8014" },
+    "createdAt": { "$date": "2021-09-15T14:45:00Z" },
+    "updatedAt": { "$date": "2023-05-20T11:00:00Z" },
+    "documents": [
+      { "$oid": "64b5e7d6a1c9d1a100000006" }
+    ]
+  }
+]
