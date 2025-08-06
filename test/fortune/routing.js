@@ -1043,6 +1043,20 @@ module.exports = function (options) {
             done();
           });
       });
+      it('should be able to expose resources metadata for fortune-client', function (done) {
+        request(baseUrl)
+          .get('/resources/fortune-client')
+          .expect(200)
+          .end(function (err, res) {
+            should.not.exist(err);
+            var body = JSON.parse(res.text);
+            body.resources.should.be.an.Array;
+            should.exist(body.resources[0].name);
+            should.exist(body.resources[0].route);
+            should.not.exist(body.resources[0].schema);
+            done();
+          });
+      });
     });
   });
 };
