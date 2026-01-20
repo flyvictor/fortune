@@ -17,9 +17,9 @@ module.exports = function(options){
           should.not.exist(err);
           var body = JSON.parse(res.text);
           body.should.have.keys('resources');
-          body.resources.length.should.equal(5);
+          body.resources.length.should.equal(6);
           var list = _.map(body.resources, 'name');
-          list.should.eql(['person', 'house', 'pet', 'address', 'car']);
+          list.should.eql(['person', 'house', 'pet', 'address', 'car', 'country']);
           done();
         });
     });
@@ -30,9 +30,9 @@ module.exports = function(options){
         .end(function(err, res){
           should.not.exist(err);
           var body = JSON.parse(res.text);
-          body.resources.length.should.equal(3);
+          body.resources.length.should.equal(4);
           var list = _.map(body.resources, 'name');
-          list.should.eql(['pet','address','car']);
+          list.should.eql(['pet', 'address', 'car', 'country']);
           done();
         });
     });

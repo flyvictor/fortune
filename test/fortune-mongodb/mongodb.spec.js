@@ -136,7 +136,7 @@ module.exports = function (options) {
         let originalModels;
         beforeEach(function () {
           originalModels = adapter._models;
-          
+
           sinon.stub(adapter, '_getInverseReferences');
           sinon.stub(adapter, '_updateOneToOne').returns(RSVP.resolve());
           sinon.stub(adapter, '_updateOneToMany').returns(RSVP.resolve());
@@ -874,6 +874,102 @@ module.exports = function (options) {
           docs.length.should.equal(1);
           docs[0].name.should.equal('Wally');
         });
+      });
+    });
+
+    describe('Sharded models', function () {
+      it('should find resources in sharded cache collection', async function () {
+        await adapter.db.collections['country-locs'].updateOne(
+          {
+            location: 'AE',
+            name: 'United States',
+          },
+          {
+            $set: {
+              slug: 'us-ae',
+            },
+          },
+        );
+
+        const countriesWithoutLocation = await adapter.findMany(
+          'country',
+          {
+            name: 'United States',
+          },
+        );
+        countriesWithoutLocation[0].slug.should.eql('us');
+
+        const countriesWithLocation = await adapter.findMany(
+          'country',
+          {
+            location: 'AE',
+            name: 'United States',
+          },
+          { canUseShardedCollection: true },
+        );
+        countriesWithLocation[0].slug.should.eql('us-ae');
+      });
+      it('should update sharded cache collection with updated data', async function () {
+        await adapter.update('country', {
+          name: 'United States',
+        }, {
+          slug: 'us-updated',
+        });
+
+        const shardedCountries = await adapter.db.collections['country-locs']
+          .find({
+            name: 'United States',
+          })
+          .sort({ location: 1 })
+          .toArray();
+        shardedCountries.length.should.eql(2);
+        shardedCountries[0].location.should.eql('AE');
+        shardedCountries[0].slug.should.eql('us-updated');
+        shardedCountries[1].location.should.eql('GB');
+        shardedCountries[1].slug.should.eql('us-updated');
+      });
+      it('should create sharded cache collection with new data', async function () {
+        await adapter.create(
+          'country',
+          {
+            name: 'New Country',
+            slug: 'new',
+          },
+        );
+
+        const shardedCountries = await adapter.db.collections['country-locs']
+          .find({
+            name: 'New Country',
+          })
+          .sort({ location: 1 })
+          .toArray();
+        shardedCountries.length.should.eql(2);
+        shardedCountries[0].location.should.eql('AE');
+        shardedCountries[0].slug.should.eql('new');
+        shardedCountries[1].location.should.eql('GB');
+        shardedCountries[1].slug.should.eql('new');
+      });
+      it('should delete sharded cache collection data', async function () {
+        const countries = await adapter.findMany(
+          'country',
+          {
+            location: 'AE',
+            name: 'United States',
+          },
+          { canUseShardedCollection: true },
+        );
+        await adapter.markDeleted('country', countries[0].id);
+
+        // us country is deleted from sharded collection
+        const shardedCountries = await adapter.db.collections['country-locs']
+          .find({})
+          .sort({ location: 1 })
+          .toArray();
+        shardedCountries.length.should.eql(2);
+        shardedCountries[0].location.should.eql('AE');
+        shardedCountries[0].slug.should.eql('uk');
+        shardedCountries[1].location.should.eql('GB');
+        shardedCountries[1].slug.should.eql('uk');
       });
     });
   });

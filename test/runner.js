@@ -7,7 +7,7 @@ var fixtures = require('./fixtures.json');
 var port = 8891;
 var baseUrl = 'http://localhost:' + port;
 process.env.DISASTER_RECOVERY_COUNT_ENABLED = 'true';
-
+process.env.SHARDED_MODEL_LOCATIONS = 'GB,AE';
 describe('Fortune test runner', function () {
   var options = {
     app: null,
