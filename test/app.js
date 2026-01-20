@@ -362,7 +362,9 @@ module.exports = function(options, port) {
         slug: String,
       },
       {
-        model: { shardedModel: 'country-loc' },
+        model: {
+          shardedModel: { name: 'country-loc', locations: ['GB', 'AE'] }
+        },
       },
     )
 
