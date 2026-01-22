@@ -77,5 +77,15 @@
     {
       "address": "Abbey Road"
     }
+  ],
+  "countries": [
+    {
+      "name": "United Kingdom",
+      "slug": "uk"
+    },
+    {
+      "name": "United States",
+      "slug": "us"
+    }
   ]
 }
