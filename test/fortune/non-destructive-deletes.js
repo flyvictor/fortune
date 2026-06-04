@@ -295,6 +295,43 @@ module.exports = function (options) {
             });
         });
     });
+    it('should cast _links ObjectId string filters', function (done) {
+      request(baseUrl)
+        .patch('/people/' + ids.people[0])
+        .set('content-type', 'application/json')
+        .send(
+          JSON.stringify([
+            {
+              op: 'replace',
+              path: '/people/0/links/soulmate',
+              value: ids.people[1],
+            },
+          ]),
+        )
+        .expect(200)
+        .end(function (err) {
+          should.not.exist(err);
+          request(baseUrl)
+            .del('/people/' + ids.people[0])
+            .expect(204)
+            .end(function (err) {
+              should.not.exist(err);
+              request(baseUrl)
+                .get(
+                  '/people?includeDeleted=true&filter[_links.soulmate]=' +
+                    ids.people[1],
+                )
+                .expect(200)
+                .end(function (err, res) {
+                  should.not.exist(err);
+                  var body = JSON.parse(res.text);
+                  body.people.length.should.equal(1);
+                  body.people[0].id.should.equal(ids.people[0]);
+                  done();
+                });
+            });
+        });
+    });
     it('should be able to delete resource destructively', function (done) {
       request(baseUrl)
         .del('/people/' + ids.people[0] + '?destroy=1')
