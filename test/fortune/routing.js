@@ -1,30 +1,28 @@
-var should = require('should');
-var _ = require('lodash');
-var RSVP = require('rsvp');
-var request = require('supertest');
-var Promise = RSVP.Promise;
-var fixtures = require('../fixtures.json');
+const should = require('should');
+const _ = require('lodash');
+const request = require('supertest');
+const fixtures = require('../fixtures.json');
+const fixtureCollections = Object.keys(fixtures);
 
 module.exports = function (options) {
   describe('routing', function () {
-    var app, baseUrl, ids, adapter;
+    let baseUrl, ids, adapter;
     beforeEach(function () {
-      app = options.app;
       baseUrl = options.baseUrl;
       ids = options.ids;
       adapter = options.app.adapter;
     });
 
     describe('getting a list of resources', function () {
-      _.each(fixtures, function (resources, collection) {
-        it('in collection "' + collection + '"', function (done) {
+      for (const collection of fixtureCollections) {
+        it(`in collection "${collection}"`, function (done) {
           request(baseUrl)
-            .get('/' + collection)
+            .get(`/${collection}`)
             .expect('Content-Type', /json/)
             .expect(200)
             .end(function (error, response) {
               should.not.exist(error);
-              var body = JSON.parse(response.text);
+              const body = JSON.parse(response.text);
               ids[collection].forEach(function (id) {
                 _.includes(_.map(body[collection], 'id'), id).should.equal(
                   true,
@@ -33,22 +31,22 @@ module.exports = function (options) {
               done();
             });
         });
-      });
+      }
     });
 
     describe('getting each individual resource', function () {
-      _.each(fixtures, function (resources, collection) {
-        it('in collection "' + collection + '"', function (done) {
-          RSVP.all(
+      for (const collection of fixtureCollections) {
+        it(`in collection "${collection}"`, function (done) {
+          Promise.all(
             ids[collection].map(function (id) {
               return new Promise(function (resolve) {
                 request(baseUrl)
-                  .get('/' + collection + '/' + id)
+                  .get(`/${collection}/${id}`)
                   .expect('Content-Type', /json/)
                   .expect(200)
                   .end(function (error, response) {
                     should.not.exist(error);
-                    var body = JSON.parse(response.text);
+                    const body = JSON.parse(response.text);
                     body[collection].forEach(function (resource) {
                       resource.id.should.equal(id);
                     });
@@ -60,13 +58,13 @@ module.exports = function (options) {
             done();
           });
         });
-      });
+      }
     });
 
     describe('getting a subresource', function () {
       beforeEach(function (done) {
         request(baseUrl)
-          .patch('/people/' + ids.people[0])
+          .patch(`/people/${ids.people[0]}`)
           .set('content-type', 'application/json')
           .send(
             JSON.stringify([
@@ -80,14 +78,14 @@ module.exports = function (options) {
           .expect(200)
           .end(function (err, res) {
             should.not.exist(err);
-            var body = JSON.parse(res.text);
+            const body = JSON.parse(res.text);
             body.people[0].links.addresses.length.should.equal(2);
             done();
           });
       });
       it('should set correct route type and expose it to hooks', function (done) {
         request(baseUrl)
-          .get('/people/' + ids.people[0] + '/addresses')
+          .get(`/people/${ids.people[0]}/addresses`)
           .set('route-type-match', 'getSubresources')
           .expect(200)
           .expect('route-type', 'getSubresources')
@@ -99,11 +97,11 @@ module.exports = function (options) {
       });
       it('should be able to return subresource', function (done) {
         request(baseUrl)
-          .get('/people/' + ids.people[0] + '/addresses')
+          .get(`/people/${ids.people[0]}/addresses`)
           .expect(200)
           .end(function (err, res) {
             should.not.exist(err);
-            var body = JSON.parse(res.text);
+            const body = JSON.parse(res.text);
             body.addresses.length.should.equal(2);
             should.not.exist(body.people);
             done();
@@ -111,22 +109,19 @@ module.exports = function (options) {
       });
       it('should apply provided filters to subresource only', function (done) {
         request(baseUrl)
-          .get('/addresses/' + ids.addresses[0])
+          .get(`/addresses/${ids.addresses[0]}`)
           .expect(200)
           .end(function (err, res) {
             should.not.exist(err);
-            var addressName = JSON.parse(res.text).addresses[0].name;
+            const addressName = JSON.parse(res.text).addresses[0].name;
             request(baseUrl)
               .get(
-                '/people/' +
-                  ids.people[0] +
-                  '/addresses?filter[name]=' +
-                  addressName,
+                `/people/${ids.people[0]}/addresses?filter[name]=${addressName}`,
               )
               .expect(200)
               .end(function (err, res) {
                 should.not.exist(err);
-                var body = JSON.parse(res.text);
+                const body = JSON.parse(res.text);
                 body.addresses.length.should.equal(1);
                 should.not.exist(body.people);
                 done();
@@ -136,23 +131,22 @@ module.exports = function (options) {
     });
 
     describe('non-destructive deletes on subresources', function () {
-      var nestedObjectId;
+      let nestedObjectId;
       beforeEach(function (done) {
-        var removeObjectId;
-        var nestedObject1 = {
+        const nestedObject1 = {
           nestedField1: 'A string',
           nestedField2: 1000000,
         };
-        var nestedObject2 = {
+        const nestedObject2 = {
           nestedField1: 'Another string',
           nestedField2: 1,
         };
-        var nestedObject3 = {
+        const nestedObject3 = {
           nestedField1: 'A third string',
           nestedField2: 3,
         };
         request(baseUrl)
-          .patch('/people/' + ids.people[0])
+          .patch(`/people/${ids.people[0]}`)
           .set('content-type', 'application/json')
           .send(
             JSON.stringify([
@@ -176,30 +170,29 @@ module.exports = function (options) {
           .expect(200)
           .end(function (err, res) {
             should.not.exist(err);
-            var body = JSON.parse(res.text);
+            const body = JSON.parse(res.text);
 
             body.people[0].nestedArray.length.should.equal(3);
             nestedObjectId = body.people[0].nestedArray[0]._id;
-            removeObjectId = body.people[0].nestedArray[2]._id;
             done();
           });
       });
       it('should remove subdocument by ID', function (done) {
         request(baseUrl)
-          .patch('/people/' + ids.people[0])
+          .patch(`/people/${ids.people[0]}`)
           .set('content-type', 'application/json')
           .send(
             JSON.stringify([
-              { op: 'remove', path: '/people/0/nestedArray/' + nestedObjectId },
+              { op: 'remove', path: `/people/0/nestedArray/${nestedObjectId}` },
             ]),
           )
           .expect(200)
           .end(function (err, res) {
             should.not.exist(err);
-            var body = JSON.parse(res.text);
+            const body = JSON.parse(res.text);
             body.people[0].nestedArray.length.should.equal(2);
 
-            var filteredArray = body.people[0].nestedArray.filter(function (
+            const filteredArray = body.people[0].nestedArray.filter(function (
               arg,
             ) {
               return arg._id === nestedObjectId;
@@ -211,34 +204,34 @@ module.exports = function (options) {
       });
       it('deleted subdocuments should be returned with includeDeleted flag', function (done) {
         request(baseUrl)
-          .patch('/people/' + ids.people[0])
+          .patch(`/people/${ids.people[0]}`)
           .set('content-type', 'application/json')
           .send(
             JSON.stringify([
-              { op: 'remove', path: '/people/0/nestedArray/' + nestedObjectId },
+              { op: 'remove', path: `/people/0/nestedArray/${nestedObjectId}` },
             ]),
           )
           .end(function (err, res) {
             if (err) return done(err);
 
-            var body = JSON.parse(res.text);
+            const body = JSON.parse(res.text);
             body.people[0].nestedArray.length.should.equal(2);
 
             request(baseUrl)
-              .get('/people/' + ids.people[0] + '?includeDeleted=1')
+              .get(`/people/${ids.people[0]}?includeDeleted=1`)
               .set('content-type', 'application/json')
               .expect(200)
               .end(function (err, res) {
                 if (err) return done(err);
 
-                var body = JSON.parse(res.text);
+                const body = JSON.parse(res.text);
                 body.people[0].nestedArray.length.should.equal(3);
 
-                var filteredArray = body.people[0].nestedArray.filter(function (
-                  arg,
-                ) {
-                  return arg._id === nestedObjectId;
-                });
+                const filteredArray = body.people[0].nestedArray.filter(
+                  function (arg) {
+                    return arg._id === nestedObjectId;
+                  },
+                );
 
                 filteredArray.length.should.equal(1);
                 done();
@@ -247,31 +240,31 @@ module.exports = function (options) {
       });
       it('deleted subdocuments should have a deletedAt field', function (done) {
         request(baseUrl)
-          .patch('/people/' + ids.people[0])
+          .patch(`/people/${ids.people[0]}`)
           .set('content-type', 'application/json')
           .send(
             JSON.stringify([
-              { op: 'remove', path: '/people/0/nestedArray/' + nestedObjectId },
+              { op: 'remove', path: `/people/0/nestedArray/${nestedObjectId}` },
             ]),
           )
           .end(function (err, res) {
-            var body = JSON.parse(res.text);
+            const body = JSON.parse(res.text);
             body.people[0].nestedArray.length.should.equal(2);
 
             request(baseUrl)
-              .get('/people/' + ids.people[0] + '?includeDeleted=1')
+              .get(`/people/${ids.people[0]}?includeDeleted=1`)
               .set('content-type', 'application/json')
               .expect(200)
               .end(function (err, res) {
                 should.not.exist(err);
-                var body = JSON.parse(res.text);
+                const body = JSON.parse(res.text);
                 body.people[0].nestedArray.length.should.equal(3);
 
-                var filteredArray = body.people[0].nestedArray.filter(function (
-                  arg,
-                ) {
-                  return arg._id === nestedObjectId;
-                });
+                const filteredArray = body.people[0].nestedArray.filter(
+                  function (arg) {
+                    return arg._id === nestedObjectId;
+                  },
+                );
 
                 filteredArray[0].should.have.ownProperty('deletedAt');
                 done();
@@ -282,11 +275,11 @@ module.exports = function (options) {
 
     describe('creating a list of resources', function () {
       it('should create a list of resources setting proper references', function (done) {
-        var resources = _.reduce(
+        const resources = _.reduce(
           [ids.people[0], ids.people[0], ids.people[1]],
           function (memo, person) {
             memo.push({
-              name: '' + memo.length,
+              name: `${memo.length}`,
               person: person,
             });
             return memo;
@@ -303,8 +296,8 @@ module.exports = function (options) {
           )
           .end(function (err, res) {
             should.not.exist(err);
-            var body = JSON.parse(res.text);
-            var ids = body.addresses.map(function (addr) {
+            const body = JSON.parse(res.text);
+            const ids = body.addresses.map(function (addr) {
               should.exist(addr.links.person);
               return addr.id;
             });
@@ -320,7 +313,7 @@ module.exports = function (options) {
       });
 
       it.skip('should properly bind created resources when they are created in parallel', function (done) {
-        var people = _.reduce(
+        const people = _.reduce(
           ['one', 'two', 'three'],
           function (memo, mail) {
             memo.push({ email: mail });
@@ -328,7 +321,7 @@ module.exports = function (options) {
           },
           [],
         );
-        var addresses = _.reduce(
+        const addresses = _.reduce(
           ['one', 'two', 'three'],
           function (memo, person) {
             memo.push({ person: person });
@@ -344,10 +337,10 @@ module.exports = function (options) {
               .send(JSON.stringify(body))
               .end(function (err, res) {
                 should.not.exist(err);
-                var body = JSON.parse(res.text);
-                _.each(body[path.replace('/', '')], function (i) {
+                const body = JSON.parse(res.text);
+                for (const i of body[path.replace('/', '')]) {
                   console.log(i);
-                });
+                }
                 resolve(
                   _.map(body[path.replace('/', '')], function (i) {
                     return i.id;
@@ -364,12 +357,12 @@ module.exports = function (options) {
             return true;
           });
         }
-        RSVP.all([
+        Promise.all([
           create('/addresses', { addresses: addresses }),
           create('/people', { people: people }),
         ])
           .then(function (results) {
-            return RSVP.all([
+            return Promise.all([
               verify('person', results[0], 'addresses'),
               verify('address', results[1], 'person'),
             ]);
@@ -390,7 +383,7 @@ module.exports = function (options) {
             .end(function (err, res) {
               should.not.exist(err);
               res.statusCode.should.equal(200);
-              var body = JSON.parse(res.text);
+              const body = JSON.parse(res.text);
 
               body.people.length.should.be.above(1);
 
@@ -402,7 +395,7 @@ module.exports = function (options) {
               request(baseUrl)
                 .del('/people/')
                 .expect(204)
-                .end(function (err, res) {
+                .end(function (err) {
                   should.not.exist(err);
                   resolve();
                 });
@@ -415,7 +408,7 @@ module.exports = function (options) {
               .end(function (err, res) {
                 should.not.exist(err);
                 res.statusCode.should.equal(200);
-                var body = JSON.parse(res.text);
+                const body = JSON.parse(res.text);
 
                 body.people.length.should.be.equal(0);
 
@@ -428,7 +421,7 @@ module.exports = function (options) {
     describe('individual delete route', function () {
       it('should delete single value', function (done) {
         request(baseUrl)
-          .del('/people/' + ids.people[0])
+          .del(`/people/${ids.people[0]}`)
           .expect(204)
           .end(function (err) {
             should.not.exist(err);
@@ -437,7 +430,7 @@ module.exports = function (options) {
               .expect(200)
               .end(function (err, res) {
                 should.not.exist(err);
-                var body = JSON.parse(res.text);
+                const body = JSON.parse(res.text);
                 body.people.length.should.be.greaterThan(0);
                 done();
               });
@@ -461,20 +454,20 @@ module.exports = function (options) {
     describe('PATCH replace method', function () {
       it('with empty update', function (done) {
         request(baseUrl)
-          .patch('/cars/' + ids.cars[0])
+          .patch(`/cars/${ids.cars[0]}`)
           .set('content-type', 'application/json')
           .send(JSON.stringify([]))
           .expect(200)
           .end(function (err, res) {
             if (err) return done(err);
-            var body = JSON.parse(res.text);
+            const body = JSON.parse(res.text);
             body.cars[0].additionalDetails.seats.should.equal(5);
             done();
           });
       });
       it('with embedded documents', function (done) {
         request(baseUrl)
-          .patch('/cars/' + ids.cars[0])
+          .patch(`/cars/${ids.cars[0]}`)
           .set('content-type', 'application/json')
           .send(
             JSON.stringify([
@@ -494,7 +487,7 @@ module.exports = function (options) {
           .expect(200)
           .end(function (err, res) {
             if (err) return done(err);
-            var body = JSON.parse(res.text);
+            const body = JSON.parse(res.text);
             body.cars[0].additionalDetails.seats.should.equal(100);
             done();
           });
@@ -502,7 +495,7 @@ module.exports = function (options) {
       describe('with nested schemas', function () {
         beforeEach(function (done) {
           patch(
-            '/people/' + ids.people[0],
+            `/people/${ids.people[0]}`,
             [
               {
                 op: 'add',
@@ -523,19 +516,19 @@ module.exports = function (options) {
         });
         it('should apply update to correct item matching provided _id', function (done) {
           request(baseUrl)
-            .get('/people/' + ids.people[0])
+            .get(`/people/${ids.people[0]}`)
             .end(function (err, res) {
               if (err) return done(err);
 
-              var body = JSON.parse(res.text);
-              var person = body.people[0];
-              var itemId = person.nestedArray[0]._id;
+              const body = JSON.parse(res.text);
+              const person = body.people[0];
+              const itemId = person.nestedArray[0]._id;
               patch(
-                '/people/' + ids.people[0],
+                `/people/${ids.people[0]}`,
                 [
                   {
                     op: 'replace',
-                    path: '/people/0/nestedArray/' + itemId + '/nestedField1',
+                    path: `/people/0/nestedArray/${itemId}/nestedField1`,
                     value: 'updated',
                   },
                 ],
@@ -543,7 +536,7 @@ module.exports = function (options) {
                   if (err) return done(err);
 
                   try {
-                    var body = JSON.parse(res.text);
+                    const body = JSON.parse(res.text);
                     body.people[0].nestedArray[0].nestedField1.should.equal(
                       'updated',
                     );
@@ -554,33 +547,32 @@ module.exports = function (options) {
                   } catch (err) {
                     done(err);
                   }
-                }
+                },
               );
             });
         });
         it('should be able to update deleted item matching provided _id', function (done) {
           request(baseUrl)
-            .get('/people/' + ids.people[0])
+            .get(`/people/${ids.people[0]}`)
             .end(function (err, res) {
               if (err) return done(err);
 
-              var body = JSON.parse(res.text);
-              var person = body.people[0];
-              var itemId = person.nestedArray[0]._id;
+              const body = JSON.parse(res.text);
+              const person = body.people[0];
+              const itemId = person.nestedArray[0]._id;
 
               patch(
-                '/people/' + person.id,
-                [{ op: 'remove', path: '/people/0/nestedArray/' + itemId }],
+                `/people/${person.id}`,
+                [{ op: 'remove', path: `/people/0/nestedArray/${itemId}` }],
                 function (err) {
                   if (err) return done(err);
-                  
+
                   patch(
-                    '/people/' + person.id,
+                    `/people/${person.id}`,
                     [
                       {
                         op: 'replace',
-                        path:
-                          '/people/0/nestedArray/' + itemId + '/nestedField1',
+                        path: `/people/0/nestedArray/${itemId}/nestedField1`,
                         value: 'updated',
                       },
                     ],
@@ -588,9 +580,8 @@ module.exports = function (options) {
                       if (err) return done(err);
                       options.app.adapter
                         .model('person')
-                        .findOne(
-                          { email: person.email },
-                        ).then((dbPerson) => {
+                        .findOne({ email: person.email })
+                        .then((dbPerson) => {
                           should.not.exist(err);
                           dbPerson._internal.deleted.nestedArray[0].nestedField1.should.equal(
                             'updated',
@@ -606,13 +597,13 @@ module.exports = function (options) {
         });
         it('should be backward compatible with update path providing document index', function (done) {
           request(baseUrl)
-            .get('/people/' + ids.people[0])
+            .get(`/people/${ids.people[0]}`)
             .end(function (err, res) {
               if (err) return done(err);
-              var body = JSON.parse(res.text);
-              var person = body.people[0]
+              const body = JSON.parse(res.text);
+              const person = body.people[0];
               patch(
-                '/people/' + person.id,
+                `/people/${person.id}`,
                 [
                   {
                     op: 'replace',
@@ -641,26 +632,26 @@ module.exports = function (options) {
 
     describe('PATCH add method', function () {
       beforeEach(function (done) {
-        var cmd = [
+        const cmd = [
           {
             op: 'add',
             path: '/people/0/links/houses/-',
             value: ids.houses[0],
           },
         ];
-        patch('/people/' + ids.people[0], cmd, done);
+        patch(`/people/${ids.people[0]}`, cmd, done);
       });
       it('should atomically add item to array', function (done) {
-        var cmd = [
+        const cmd = [
           {
             op: 'add',
             path: '/people/0/links/houses/-',
             value: ids.houses[1],
           },
         ];
-        patch('/people/' + ids.people[0], cmd, function (err, res) {
+        patch(`/people/${ids.people[0]}`, cmd, function (err, res) {
           should.not.exist(err);
-          var body = JSON.parse(res.text);
+          const body = JSON.parse(res.text);
           body.people[0].links.houses.length.should.equal(2);
           body.people[0].links.houses[1].should.equal(ids.houses[1]);
           done();
@@ -668,17 +659,17 @@ module.exports = function (options) {
       });
       it('should also update related resource', function (done) {
         request(baseUrl)
-          .get('/houses/' + ids.houses[0])
+          .get(`/houses/${ids.houses[0]}`)
           .expect(200)
           .end(function (err, res) {
             should.not.exist(err);
-            var body = JSON.parse(res.text);
+            const body = JSON.parse(res.text);
             body.houses[0].links.owners[0].should.equal(ids.people[0]);
             done();
           });
       });
       it('should support bulk update', function (done) {
-        var cmd = [
+        const cmd = [
           {
             op: 'add',
             path: '/people/0/links/houses/-',
@@ -690,32 +681,32 @@ module.exports = function (options) {
             value: ids.houses[0],
           },
         ];
-        patch('/people/' + ids.people[0], cmd, function (err, res) {
+        patch(`/people/${ids.people[0]}`, cmd, function (err, res) {
           should.not.exist(err);
-          var body = JSON.parse(res.text);
+          const body = JSON.parse(res.text);
           body.people[0].links.houses.length.should.equal(3);
           done();
         });
       });
       it('should be backward compatible with /resource/0/field syntax', function (done) {
-        var cmd = [
+        const cmd = [
           { op: 'add', path: '/people/0/houses', value: ids.houses[1] },
         ];
-        patch('/people/' + ids.people[0], cmd, function (err, res) {
+        patch(`/people/${ids.people[0]}`, cmd, function (err, res) {
           should.not.exist(err);
-          var body = JSON.parse(res.text);
+          const body = JSON.parse(res.text);
           body.people[0].links.houses.length.should.equal(2);
           body.people[0].links.houses[1].should.equal(ids.houses[1]);
           done();
         });
       });
       it('should be backward compatible with /resource/0/field/- syntax', function (done) {
-        var cmd = [
+        const cmd = [
           { op: 'add', path: '/people/0/houses/-', value: ids.houses[1] },
         ];
-        patch('/people/' + ids.people[0], cmd, function (err, res) {
+        patch(`/people/${ids.people[0]}`, cmd, function (err, res) {
           should.not.exist(err);
-          var body = JSON.parse(res.text);
+          const body = JSON.parse(res.text);
           body.people[0].links.houses.length.should.equal(2);
           body.people[0].links.houses[1].should.equal(ids.houses[1]);
           done();
@@ -728,7 +719,7 @@ module.exports = function (options) {
        * and three different houses should reference people[0]
        */
       beforeEach(function (done) {
-        var cmd = [
+        const cmd = [
           {
             op: 'add',
             path: '/people/0/links/houses/-',
@@ -745,7 +736,7 @@ module.exports = function (options) {
             value: ids.houses[2],
           },
         ];
-        patch('/people/' + ids.people[0], cmd, function (err) {
+        patch(`/people/${ids.people[0]}`, cmd, function (err) {
           should.not.exist(err);
           done();
         });
@@ -754,7 +745,7 @@ module.exports = function (options) {
        * After this houses[0] should have three owners
        */
       beforeEach(function (done) {
-        var cmd = [
+        const cmd = [
           {
             op: 'add',
             path: '/houses/0/links/owners/-',
@@ -766,21 +757,21 @@ module.exports = function (options) {
             value: ids.people[2],
           },
         ];
-        patch('/houses/' + ids.houses[0], cmd, function (err) {
+        patch(`/houses/${ids.houses[0]}`, cmd, function (err) {
           should.not.exist(err);
           done();
         });
       });
       it('should atomically remove array item', function (done) {
-        var cmd = [
+        const cmd = [
           {
             op: 'remove',
-            path: '/people/0/links/houses/' + ids.houses[0],
+            path: `/people/0/links/houses/${ids.houses[0]}`,
           },
         ];
-        patch('/people/' + ids.people[0], cmd, function (err, res) {
+        patch(`/people/${ids.people[0]}`, cmd, function (err, res) {
           should.not.exist(err);
-          var body = JSON.parse(res.text);
+          const body = JSON.parse(res.text);
           body.people.should.be.an.Array;
           body.people[0].links.houses.length.should.equal(2);
           body.people[0].links.houses.indexOf(ids.houses[0]).should.equal(-1);
@@ -788,19 +779,19 @@ module.exports = function (options) {
         });
       });
       it('should also update referenced item', function (done) {
-        var cmd = [
+        const cmd = [
           {
             op: 'remove',
-            path: '/people/0/links/houses/' + ids.houses[0],
+            path: `/people/0/links/houses/${ids.houses[0]}`,
           },
         ];
-        patch('/people/' + ids.people[0], cmd, function (err) {
+        patch(`/people/${ids.people[0]}`, cmd, function (err) {
           should.not.exist(err);
           request(baseUrl)
-            .get('/houses/' + ids.houses[0])
+            .get(`/houses/${ids.houses[0]}`)
             .end(function (err, res) {
               should.not.exist(err);
-              var body = JSON.parse(res.text);
+              const body = JSON.parse(res.text);
               body.houses[0].links.owners.length.should.equal(2);
               body.houses[0].links.owners
                 .indexOf(ids.people[0])
@@ -810,28 +801,30 @@ module.exports = function (options) {
         });
       });
       it('should support bulk operation', function (done) {
-        var cmd = [
+        const cmd = [
           {
             op: 'remove',
-            path: '/people/0/links/houses/' + ids.houses[0],
+            path: `/people/0/links/houses/${ids.houses[0]}`,
           },
           {
             op: 'remove',
-            path: '/people/0/links/houses/' + ids.houses[1],
+            path: `/people/0/links/houses/${ids.houses[1]}`,
           },
         ];
-        patch('/people/' + ids.people[0], cmd, function (err, res) {
+        patch(`/people/${ids.people[0]}`, cmd, function (err, res) {
           should.not.exist(err);
-          var body = JSON.parse(res.text);
+          const body = JSON.parse(res.text);
           body.people[0].links.houses.length.should.equal(1);
           done();
         });
       });
       it('should be backward compatible with /field/value syntax', function (done) {
-        var cmd = [{ op: 'remove', path: '/people/0/houses/' + ids.houses[0] }];
-        patch('/people/' + ids.people[0], cmd, function (err, res) {
+        const cmd = [
+          { op: 'remove', path: `/people/0/houses/${ids.houses[0]}` },
+        ];
+        patch(`/people/${ids.people[0]}`, cmd, function (err, res) {
           should.not.exist(err);
-          var body = JSON.parse(res.text);
+          const body = JSON.parse(res.text);
           body.people[0].links.houses.length.should.equal(2);
           done();
         });
@@ -853,14 +846,14 @@ module.exports = function (options) {
     describe('PATCH inc method', function () {
       it('should increment target path by provided value', function (done) {
         request(baseUrl)
-          .get('/people/' + ids.people[0])
+          .get(`/people/${ids.people[0]}`)
           .expect(200)
           .end(function (err, res) {
             should.not.exist(err);
-            var body = JSON.parse(res.text);
-            var current = body.people[0].appearances;
+            const body = JSON.parse(res.text);
+            const current = body.people[0].appearances;
             request(baseUrl)
-              .patch('/people/' + ids.people[0])
+              .patch(`/people/${ids.people[0]}`)
               .set('content-type', 'application/json')
               .send(
                 JSON.stringify([
@@ -870,7 +863,7 @@ module.exports = function (options) {
               .expect(200)
               .end(function (err, res) {
                 should.not.exist(err);
-                var updated = res.body.people[0].appearances;
+                const updated = res.body.people[0].appearances;
                 updated.should.equal(current + 5);
                 done();
               });
@@ -878,14 +871,14 @@ module.exports = function (options) {
       });
       it('should increment target path by 1 if value is not a valid integer', function (done) {
         request(baseUrl)
-          .get('/people/' + ids.people[0])
+          .get(`/people/${ids.people[0]}`)
           .expect(200)
           .end(function (err, res) {
             should.not.exist(err);
-            var body = JSON.parse(res.text);
-            var current = body.people[0].appearances;
+            const body = JSON.parse(res.text);
+            const current = body.people[0].appearances;
             request(baseUrl)
-              .patch('/people/' + ids.people[0])
+              .patch(`/people/${ids.people[0]}`)
               .set('content-type', 'application/json')
               .send(
                 JSON.stringify([
@@ -899,7 +892,7 @@ module.exports = function (options) {
               .expect(200)
               .end(function (err, res) {
                 should.not.exist(err);
-                var updated = res.body.people[0].appearances;
+                const updated = res.body.people[0].appearances;
                 updated.should.equal(current + 1);
                 done();
               });
@@ -907,7 +900,7 @@ module.exports = function (options) {
       });
       it('should error if target path is not Number', function (done) {
         request(baseUrl)
-          .patch('/people/' + ids.people[0])
+          .patch(`/people/${ids.people[0]}`)
           .set('content-type', 'application/json')
           .send(
             JSON.stringify([
@@ -917,14 +910,14 @@ module.exports = function (options) {
           .expect(500)
           .end(function (err, res) {
             should.not.exist(err);
-            var body = JSON.parse(res.text);
+            const body = JSON.parse(res.text);
             body.detail.should.match(/increment with non-numeric argument/);
             done();
           });
       });
       it('should correctly apply positional updates with $inc', function (done) {
         request(baseUrl)
-          .patch('/people/' + ids.people[0])
+          .patch(`/people/${ids.people[0]}`)
           .set('content-type', 'application/json')
           .send(
             JSON.stringify([
@@ -938,18 +931,18 @@ module.exports = function (options) {
           .expect(200)
           .end(function (err, res) {
             should.not.exist(err);
-            var body = JSON.parse(res.text);
-            var beforeInc = body.people[0].nestedArray;
-            var embedId = body.people[0].nestedArray[1]._id;
+            const body = JSON.parse(res.text);
+            const beforeInc = body.people[0].nestedArray;
+            const embedId = body.people[0].nestedArray[1]._id;
 
             request(baseUrl)
-              .patch('/people/' + ids.people[0])
+              .patch(`/people/${ids.people[0]}`)
               .set('content-type', 'application/json')
               .send(
                 JSON.stringify([
                   {
                     op: 'inc',
-                    path: '/people/0/nestedArray/' + embedId + '/index',
+                    path: `/people/0/nestedArray/${embedId}/index`,
                     value: 3,
                   },
                 ]),
@@ -957,7 +950,7 @@ module.exports = function (options) {
               .expect(200)
               .end(function (err, res) {
                 should.not.exist(err);
-                var body = JSON.parse(res.text);
+                const body = JSON.parse(res.text);
                 beforeInc[1].index = 5;
                 body.people[0].nestedArray.should.eql(beforeInc);
                 done();
@@ -969,7 +962,7 @@ module.exports = function (options) {
     describe('PUT individual route', function () {
       it("should create document if there's no such one with provided id and update if it exists", function (done) {
         new Promise(function (resolve) {
-          var doc = {
+          const doc = {
             people: [
               {
                 name: 'Gilbert',
@@ -987,7 +980,7 @@ module.exports = function (options) {
               resolve();
             });
         }).then(function () {
-          var upd = {
+          const upd = {
             people: [
               {
                 name: 'Huilbert',
@@ -1011,16 +1004,16 @@ module.exports = function (options) {
           .get('/people/dilbert@mailbert.com')
           .end(function (err, res) {
             should.not.exist(err);
-            var init = JSON.parse(res.text);
+            const init = JSON.parse(res.text);
             init.people[0].name.should.equal('Dilbert');
-            var upd = { people: [{ appearances: 23 }] };
+            const upd = { people: [{ appearances: 23 }] };
             request(baseUrl)
               .put('/people/dilbert@mailbert.com')
               .set('content-type', 'application/json')
               .send(JSON.stringify(upd))
               .end(function (err, res) {
                 should.not.exist(err);
-                var body = JSON.parse(res.text);
+                const body = JSON.parse(res.text);
                 body.people[0].name.should.equal('Dilbert');
                 body.people[0].appearances.should.equal(23);
                 done();
@@ -1035,7 +1028,7 @@ module.exports = function (options) {
           .expect(200)
           .end(function (err, res) {
             should.not.exist(err);
-            var body = JSON.parse(res.text);
+            const body = JSON.parse(res.text);
             body.resources.should.be.an.Array;
             should.exist(body.resources[0].name);
             should.exist(body.resources[0].schema);
@@ -1049,7 +1042,7 @@ module.exports = function (options) {
           .expect(200)
           .end(function (err, res) {
             should.not.exist(err);
-            var body = JSON.parse(res.text);
+            const body = JSON.parse(res.text);
             body.resources.should.be.an.Array;
             should.exist(body.resources[0].name);
             should.exist(body.resources[0].route);

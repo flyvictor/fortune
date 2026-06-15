@@ -1,10 +1,9 @@
-var fortune = require('../lib/fortune')
-  , RSVP = fortune.RSVP
-  , crypto = require('crypto');
+const fortune = require('../lib/fortune'),
+  crypto = require('crypto');
 
-var pbkdf2 = {
+const pbkdf2 = {
   iterations: Math.pow(2, 16),
-  keylen: Math.pow(2, 8)
+  keylen: Math.pow(2, 8),
 };
 
 /**
@@ -12,107 +11,101 @@ var pbkdf2 = {
  * This example highlights a lot of custom application logic that
  * can be used for transforming resources as requests come in.
  */
-var app = fortune({
-  db: 'keystore'
+const app = fortune({
+  db: 'keystore',
 })
+  /*!
+   * Authentication middleware
+   */
+  .use(authentication)
 
-/*!
- * Authentication middleware
- */
-.use(authentication)
+  /*!
+   * Define resources
+   */
+  .resource('user', {
+    name: String,
+    password: String,
+    salt: Buffer,
+    keys: ['key'],
+    tokens: ['token'],
+  })
+  .transform(
+    // before storing in database
+    async function (request) {
+      let user = this;
+      const password = user.password;
+      const id = user.id || request.path.split('/').pop();
 
-/*!
- * Define resources
- */
-.resource('user', {
-
-  name: String,
-  password: String,
-  salt: Buffer,
-  keys: ['key'],
-  tokens: ['token']
-
-}).transform(
-
-  // before storing in database
-  function(request) {
-    var user = this
-      , password = user.password
-      , id = user.id || request.path.split('/').pop();
-
-    // require a password on user creation
-    if(request.method == 'post') {
-      if(!!password) {
-        return hashPassword(user, password);
-      } else {
-        throw new Error('Password is required on user creation.');
+      // require a password on user creation
+      if (request.method == 'post') {
+        if (!!password) {
+          return hashPassword(user, password);
+        } else {
+          throw new Error('Password is required on user creation.');
+        }
       }
-    }
 
-    // update a user
-    return new RSVP.Promise(function(resolve, reject) {
-      checkUser(id, request).then(function(resource) {
-        if(!password) return user;
+      // update a user
+      const resource = await checkUser(id, request);
+      if (!password) return user;
 
-        user = hashPassword(user, password);
+      user = hashPassword(user, password);
 
-        // clear tokens after password change
-        RSVP.all((resource.links.tokens || []).map(function(id) {
+      // clear tokens after password change
+      await Promise.all(
+        (resource.links.tokens || []).map(function (id) {
           return app.adapter.delete('token', id);
-        })).then(function() {
-          resolve(user);
-        }, reject);
-
-      }, reject);
-    });
-
-    function hashPassword(user, password) {
-      var salt = crypto.randomBytes(Math.pow(2, 4));
-      user.password = crypto.pbkdf2Sync(
-        password, salt, pbkdf2.iterations, pbkdf2.keylen
+        }),
       );
-      user.salt = salt;
       return user;
-    }
-  },
 
-  // after retrieving from database
-  function(request) {
-    var user = this;
-    delete user.password;
-    delete user.salt;
-    return new RSVP.Promise(function(resolve) {
-      checkUser(user.id, request).then(function() {
-        resolve(user);
-      }, function() {
+      function hashPassword(user, password) {
+        const salt = crypto.randomBytes(Math.pow(2, 4));
+        user.password = crypto.pbkdf2Sync(
+          password,
+          salt,
+          pbkdf2.iterations,
+          pbkdf2.keylen,
+        );
+        user.salt = salt;
+        return user;
+      }
+    },
+
+    // after retrieving from database
+    async function (request) {
+      const user = this;
+      delete user.password;
+      delete user.salt;
+      try {
+        await checkUser(user.id, request);
+      } catch (error) {
         delete user.links;
-        resolve(user);
-      });
-    });
-  }
+      }
+      return user;
+    },
+  )
 
-)
+  .resource('token', {
+    owner: 'user',
+    value: String,
+  })
+  .transform(checkOwner, checkOwner)
+  .noIndex()
 
-.resource('token', {
+  .resource('key', {
+    name: String,
+    privateKey: String,
+    publicKey: String,
+    owner: 'user',
+  })
+  .transform(checkOwner, checkOwner)
+  .noIndex()
 
-  owner: 'user',
-  value: String
-
-}).transform(checkOwner, checkOwner).noIndex()
-
-.resource('key', {
-
-  name: String,
-  privateKey: String,
-  publicKey: String,
-  owner: 'user'
-
-}).transform(checkOwner, checkOwner).noIndex()
-
-/*!
- * Start the API
- */
-.listen(process.argv[2] || 1337);
+  /*!
+   * Start the API
+   */
+  .listen(process.argv[2] || 1337);
 
 /**
  * Custom authentication route. The request must have the header
@@ -121,76 +114,62 @@ var app = fortune({
  * It returns a token as the response body which should be
  * used as the `Authorization` header for subsequent requests.
  */
-function authentication(req, res, next) {
-  if(!req.path.match(/authenticate/i)) return next();
-  if(req.header('content-type') != 'application/json') {
+async function authentication(req, res, next) {
+  if (!req.path.match(/authenticate/i)) return next();
+  if (req.header('content-type') != 'application/json') {
     return res.send(412);
   }
-  var name, password;
+  let name, password;
   try {
     name = req.body.name;
     password = req.body.password;
-  } catch(error) {
+  } catch (error) {
     res.send(400);
   }
-  app.adapter.find('user', {name: name}).then(function(user) {
-    var derivedKey = crypto.pbkdf2Sync(
-      password, user.salt.buffer, pbkdf2.iterations, pbkdf2.keylen
+  try {
+    const user = await app.adapter.find('user', { name: name });
+    const derivedKey = crypto.pbkdf2Sync(
+      password,
+      user.salt.buffer,
+      pbkdf2.iterations,
+      pbkdf2.keylen,
     );
-    if(derivedKey != user.password) return res.send(401);
-    var token = {
+    if (derivedKey != user.password) return res.send(401);
+    const token = {
       value: crypto.randomBytes(Math.pow(2, 6)).toString('base64'),
       links: {
-        owner: user.id
-      }
+        owner: user.id,
+      },
     };
-    return app.adapter.create('token', token);
-  }, function() {
+    const createdToken = await app.adapter.create('token', token);
+    res.send(200, createdToken.value);
+  } catch (error) {
     res.send(403);
-  })
-
-  .then(function(token) {
-    res.send(200, token.value);
-  }, function() {
-    res.send(500);
-  });
+  }
 }
 
 /**
  * Check if it's allowed to read/write based on the "owner" value.
  */
-function checkOwner(request) {
-  var resource = this;
-  return new RSVP.Promise(function(resolve, reject) {
-    checkUser(resource.links.owner, request).then(function() {
-      resolve(resource);
-    }, reject);
-  });
+async function checkOwner(request) {
+  const resource = this;
+  await checkUser(resource.links.owner, request);
+  return resource;
 }
 
 /**
  * Check if a user is authorized.
  */
-function checkUser(id, request) {
-  return new RSVP.Promise(function(resolve, reject) {
-    var user, authorization = request.get('Authorization');
-    if(!authorization) return reject();
+async function checkUser(id, request) {
+  const authorization = request.get('Authorization');
+  if (!authorization) throw new Error('Authorization is required.');
 
-    app.adapter.find('user', id).then(function(resource) {
-      user = resource;
-      return app.adapter.findMany('token', resource.links.tokens);
-    }, reject)
-
-    .then(function(tokens) {
-      var tokenFound = false;
-      tokens.forEach(function(token) {
-        if(token.value == authorization) {
-          tokenFound = true;
-          resolve(user);
-        }
-      });
-      if(!tokenFound) reject();
-    }, reject);
-
+  const user = await app.adapter.find('user', id);
+  const tokens = await app.adapter.findMany('token', user.links.tokens);
+  const tokenFound = tokens.some(function (token) {
+    return token.value == authorization;
   });
+
+  if (!tokenFound) throw new Error('Token is not valid.');
+  return user;
 }

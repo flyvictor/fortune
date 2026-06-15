@@ -1,51 +1,61 @@
-var fortune = require('../lib/fortune');
-var personHooks = require('./personHooks');
-var _ = require("lodash");
-var RSVP = require("rsvp");
-var mongoosePlugin = require('./mongoose_middleware');
+const fortune = require('../lib/fortune');
+const personHooks = require('./personHooks');
+const _ = require('lodash');
+const mongoosePlugin = require('./mongoose_middleware');
 
-var hooks = {};
+const hooks = {};
 
-['beforeAll', 'beforeAllRead', 'beforeAllWrite', 'afterAll', 'afterAllRead', 'afterAllWrite'].forEach(function(type){
-  hooks[type] = [{
-    name: type,
-    config: {
-      option: type
+[
+  'beforeAll',
+  'beforeAllRead',
+  'beforeAllWrite',
+  'afterAll',
+  'afterAllRead',
+  'afterAllWrite',
+].forEach(function (type) {
+  hooks[type] = [
+    {
+      name: type,
+      config: {
+        option: type,
+      },
+      init: function (hookOptions) {
+        return function (req, res) {
+          res.setHeader(hookOptions.option, '1');
+
+          if (req.query[`fail${type}`]) {
+            console.log('Failing hook', type);
+            _.defer(function () {
+              res.sendStatus(321);
+            });
+            if (req.query[`fail${type}`] === 'boolean') return false;
+            else if (req.query[`fail${type}`] === 'undefined') return;
+            else if (req.query[`fail${type}`] === 'undefined_promise')
+              return new Promise(function (resolve) {
+                resolve(undefined);
+              });
+            else
+              return new Promise(function (resolve) {
+                resolve(false);
+              });
+          }
+
+          return this;
+        };
+      },
     },
-    init: function(hookOptions){
-      return function(req, res){
-        res.setHeader(hookOptions.option, '1');
-
-        if (req.query['fail' + type]) {
-          console.log('Failing hook',type);
-          _.defer(function() {
-            res.sendStatus(321);
-          });
-          if (req.query['fail' + type] === 'boolean')
-            return false;
-          else if (req.query['fail' + type] === 'undefined')
-            return;
-          else if (req.query['fail' + type] === 'undefined_promise')
-            return new RSVP.Promise(function(resolve) { resolve(undefined); });
-          else
-            return new RSVP.Promise(function(resolve) { resolve(false); });
-        }
-
-        return this;
-      };
-    }
-  }]
+  ];
 });
 
-var Hook = function(hookConfig){
-  return function(req, res){
+const Hook = function (hookConfig) {
+  return function (req, res) {
     res.setHeader(hookConfig.header, hookConfig.value);
     return this;
-  }
+  };
 };
 
 function HooksOrderExecutionInitFactory(app, resourceName) {
-  return function() {
+  return function () {
     return async function (req, res) {
       if (req.method !== 'POST') return this;
       if (req.get('compound-post-hooks-order-test') !== '1') return this;
@@ -56,14 +66,14 @@ function HooksOrderExecutionInitFactory(app, resourceName) {
           email: this.email,
         });
         pet = await app.adapter.model('pet').findOne({
-          _id: this.links.pets[0]
+          _id: this.links.pets[0],
         });
       } else {
         person = await app.adapter.model('person').findOne({
-          pets: {$in: [this.id]}
+          pets: { $in: [this.id] },
         });
         pet = await app.adapter.model('pet').findOne({
-          _id: this.id
+          _id: this.id,
         });
       }
 
@@ -73,37 +83,45 @@ function HooksOrderExecutionInitFactory(app, resourceName) {
       }
 
       return this;
-    }
-  }
+    };
+  };
 }
 
+module.exports = function (options, port) {
+  const app = fortune(options);
 
-module.exports = function(options, port) {
-  var app = fortune(options);
-
-  app.inflect.inflections.plural("MOT", "MOT");
+  app.inflect.inflections.plural('MOT', 'MOT');
   app.inflect.inflections.plural(/^country$/, 'countries');
 
-  app.beforeAllRW([{
-    name: "by5",
-    priority: 10,
-    init: function(){
-      return function(req, res){
-        res.setHeader("globalPriority", (res.get("globalPriority") || "") + "rect");
-        res.setHeader("hookedmethod", req.method);
-        return this;
-      }
-    }
-  },{
-    name: "by3",
-    priority: 20,
-    init: function(){
-      return function(req, res){
-        res.setHeader("globalPriority", (res.get("globalPriority") || "") + "cor");
-        return this;
-      }
-    }
-  }]);
+  app.beforeAllRW([
+    {
+      name: 'by5',
+      priority: 10,
+      init: function () {
+        return function (req, res) {
+          res.setHeader(
+            'globalPriority',
+            `${res.get('globalPriority') || ''}rect`,
+          );
+          res.setHeader('hookedmethod', req.method);
+          return this;
+        };
+      },
+    },
+    {
+      name: 'by3',
+      priority: 20,
+      init: function () {
+        return function (req, res) {
+          res.setHeader(
+            'globalPriority',
+            `${res.get('globalPriority') || ''}cor`,
+          );
+          return this;
+        };
+      },
+    },
+  ]);
 
   app
     .beforeAll(hooks.beforeAll)
@@ -217,7 +235,7 @@ module.exports = function(options, port) {
         name: 'set-fortune-extension',
         init: function () {
           return function (req) {
-            var extension = req.headers['set-fortune-extension'];
+            const extension = req.headers['set-fortune-extension'];
 
             switch (extension) {
               case 'dilbert':
@@ -363,14 +381,14 @@ module.exports = function(options, port) {
       },
       {
         model: {
-          shardedModel: { name: 'country-loc', locations: ['GB', 'AE'] }
+          shardedModel: { name: 'country-loc', locations: ['GB', 'AE'] },
         },
       },
     )
 
     .before('person', function (req, res) {
       this.password = Math.random();
-      this.official = 'Mr. ' + this.name;
+      this.official = `Mr. ${this.name}`;
       res.setHeader('before', 'called for writes only');
       return this;
     })
@@ -411,7 +429,7 @@ module.exports = function(options, port) {
           return function (req, res) {
             res.setHeader(
               'resourcePriority',
-              (res.get('resourcePriority') || '') + 'rect',
+              `${res.get('resourcePriority') || ''}rect`,
             );
             return this;
           };
@@ -424,7 +442,7 @@ module.exports = function(options, port) {
           return function (req, res) {
             res.setHeader(
               'resourcePriority',
-              (res.get('resourcePriority') || '') + 'cor',
+              `${res.get('resourcePriority') || ''}cor`,
             );
             return this;
           };
@@ -437,16 +455,16 @@ module.exports = function(options, port) {
         priority: 3,
         init: function () {
           return function (req, res) {
-            var self = this;
-            var d = RSVP.defer();
-            setImmediate(function () {
-              res.setHeader(
-                'asyncseries',
-                (res.get('asyncseries') || '') + 'cor',
-              );
-              d.resolve(self);
+            const self = this;
+            return new Promise(function (resolve) {
+              setImmediate(function () {
+                res.setHeader(
+                  'asyncseries',
+                  `${res.get('asyncseries') || ''}cor`,
+                );
+                resolve(self);
+              });
             });
-            return d.promise;
           };
         },
       },
@@ -455,16 +473,16 @@ module.exports = function(options, port) {
         priority: 2,
         init: function () {
           return function (req, res) {
-            var self = this;
-            var d = RSVP.defer();
-            setImmediate(function () {
-              res.setHeader(
-                'asyncseries',
-                (res.get('asyncseries') || '') + 're',
-              );
-              d.resolve(self);
+            const self = this;
+            return new Promise(function (resolve) {
+              setImmediate(function () {
+                res.setHeader(
+                  'asyncseries',
+                  `${res.get('asyncseries') || ''}re`,
+                );
+                resolve(self);
+              });
             });
-            return d.promise;
           };
         },
       },
@@ -473,7 +491,7 @@ module.exports = function(options, port) {
         priority: 1,
         init: function () {
           return function (req, res) {
-            res.setHeader('asyncseries', (res.get('asyncseries') || '') + 'ct');
+            res.setHeader('asyncseries', `${res.get('asyncseries') || ''}ct`);
             return this;
           };
         },
@@ -483,7 +501,7 @@ module.exports = function(options, port) {
     .after('person', function (req, res) {
       res.setHeader('after', 'called for reads only');
       delete this.password;
-      this.nickname = 'Super ' + this.name;
+      this.nickname = `Super ${this.name}`;
       return this;
     })
 
@@ -492,7 +510,7 @@ module.exports = function(options, port) {
         name: 'before-response',
         init: function () {
           return function (req) {
-            var body = this;
+            const body = this;
             if (req.headers['apply-before-response-send']) {
               req.headers['apply-before-response-send']++;
               return _.extend(body, {
@@ -516,7 +534,7 @@ module.exports = function(options, port) {
         name: 'before-error-response',
         init: function () {
           return function (req) {
-            var body = this;
+            const body = this;
             if (req.headers['apply-before-error-response-send']) {
               req.headers['apply-before-error-response-send']++;
               return _.extend(body, {
@@ -541,7 +559,7 @@ module.exports = function(options, port) {
         name: 'secondLegacyAfter',
         init: function () {
           return function () {
-            this.nickname = this.nickname + '!';
+            this.nickname = `${this.nickname}!`;
             return this;
           };
         },
@@ -564,58 +582,63 @@ module.exports = function(options, port) {
     ])
     .listen(port);
 
-  app.addHookFilter(function(hooks){
-    return _.filter(hooks, function(h){
+  app.addHookFilter(function (hooks) {
+    return _.filter(hooks, function (h) {
       return h.name !== 'filtered-out';
     });
   });
 
-  app.addResourcesFilter(function(resources, req){
-    var hiddenResources = req.get('hide-resources') && req.get('hide-resources').split(',');
+  app.addResourcesFilter(function (resources, req) {
+    const hiddenResources =
+      req.get('hide-resources') && req.get('hide-resources').split(',');
     if (!hiddenResources) return resources;
-    return _.filter(resources, function(obj){
+    return _.filter(resources, function (obj) {
       return hiddenResources.indexOf(obj.name) === -1;
-    })
+    });
   });
 
   app.addMetadataProvider({
     key: 'ping',
-    init: function(){
-      return function(){
+    init: function () {
+      return function () {
         return 'pong';
-      }
-    }
+      };
+    },
   });
 
   app.addMetadataProvider({
     key: 'sync',
-    init: function(){return function(){return 'sync'}}
+    init: function () {
+      return function () {
+        return 'sync';
+      };
+    },
   });
 
   app.addMetadataProvider({
     key: 'async',
-    init: function(){
-      return function(){
-        return new RSVP.Promise(function(resolve){
-          setImmediate(function(){
+    init: function () {
+      return function () {
+        return new Promise(function (resolve) {
+          setImmediate(function () {
             resolve('async');
           });
         });
-      }
-    }
+      };
+    },
   });
 
   app.addMetadataProvider({
     key: 'sins',
-    init: function(){
-      return function(req){
-        var resource = req.path.split('/')[1];
+    init: function () {
+      return function (req) {
+        const resource = req.path.split('/')[1];
         if (resource !== 'people') return [];
-        return _.map(this[resource], function(item){
-          return item.name + ' is a sinner';
+        return _.map(this[resource], function (item) {
+          return `${item.name} is a sinner`;
         });
-      }
-    }
+      };
+    },
   });
 
   return app;

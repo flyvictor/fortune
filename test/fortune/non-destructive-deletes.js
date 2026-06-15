@@ -1,13 +1,10 @@
-var should = require('should');
-var _ = require('lodash');
-var lodash = require('lodash');
-var request = require('supertest');
-var RSVP = require('rsvp');
-var Promise = RSVP.Promise;
+const should = require('should');
+const _ = require('lodash');
+const request = require('supertest');
 
 module.exports = function (options) {
   describe('non-destructive deletes', function () {
-    var app, baseUrl, ids, adapter;
+    let app, baseUrl, ids, adapter;
     beforeEach(function () {
       app = options.app;
       adapter = app.adapter;
@@ -19,7 +16,7 @@ module.exports = function (options) {
         .get('/people')
         .end(function (err, res) {
           should.not.exist(err);
-          var body = JSON.parse(res.text);
+          const body = JSON.parse(res.text);
           body.people.forEach(function (p) {
             should.not.exist(p._links);
           });
@@ -28,7 +25,7 @@ module.exports = function (options) {
     });
     it('should send deleted links in regular links namespace for one-way links', function (done) {
       request(baseUrl)
-        .patch('/people/' + ids.people[0])
+        .patch(`/people/${ids.people[0]}`)
         .set('content-type', 'application/json')
         .send(
           JSON.stringify([
@@ -42,16 +39,16 @@ module.exports = function (options) {
         .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
-            .del('/people/' + ids.people[0])
+            .del(`/people/${ids.people[0]}`)
             .expect(204)
             .end(function (err) {
               should.not.exist(err);
               request(baseUrl)
-                .get('/people/' + ids.people[0] + '?includeDeleted=true')
+                .get(`/people/${ids.people[0]}?includeDeleted=true`)
                 .expect(200)
                 .end(function (err, res) {
                   should.not.exist(err);
-                  var body = JSON.parse(res.text);
+                  const body = JSON.parse(res.text);
                   body.people[0].links.should.be.an.Object;
                   body.people[0].links.pets.should.eql([
                     ids.pets[0],
@@ -64,7 +61,7 @@ module.exports = function (options) {
     });
     it('should send deleted links in regular links namespace for inverse links', function (done) {
       request(baseUrl)
-        .patch('/people/' + ids.people[0])
+        .patch(`/people/${ids.people[0]}`)
         .set('content-type', 'application/json')
         .send(
           JSON.stringify([
@@ -78,16 +75,16 @@ module.exports = function (options) {
         .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
-            .del('/people/' + ids.people[0])
+            .del(`/people/${ids.people[0]}`)
             .expect(204)
             .end(function (err) {
               should.not.exist(err);
               request(baseUrl)
-                .get('/people/' + ids.people[0] + '?includeDeleted=true')
+                .get(`/people/${ids.people[0]}?includeDeleted=true`)
                 .expect(200)
                 .end(function (err, res) {
                   should.not.exist(err);
-                  var body = JSON.parse(res.text);
+                  const body = JSON.parse(res.text);
                   body.people[0].links.should.be.an.Object;
                   body.people[0].links.cars.should.eql([
                     ids.cars[0],
@@ -100,7 +97,7 @@ module.exports = function (options) {
     });
     it('should be able to include referenced resources of deleted resource', function (done) {
       request(baseUrl)
-        .patch('/people/' + ids.people[0])
+        .patch(`/people/${ids.people[0]}`)
         .set('content-type', 'application/json')
         .send(
           JSON.stringify([
@@ -114,20 +111,18 @@ module.exports = function (options) {
         .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
-            .del('/people/' + ids.people[0])
+            .del(`/people/${ids.people[0]}`)
             .expect(204)
             .end(function (err) {
               should.not.exist(err);
               request(baseUrl)
                 .get(
-                  '/people/' +
-                    ids.people[0] +
-                    '?include=cars&includeDeleted=true',
+                  `/people/${ids.people[0]}?include=cars&includeDeleted=true`,
                 )
                 .expect(200)
                 .end(function (err, res) {
                   should.not.exist(err);
-                  var body = JSON.parse(res.text);
+                  const body = JSON.parse(res.text);
                   body.people[0].links.should.be.an.Object;
                   body.people[0].links.cars.should.eql([
                     ids.cars[0],
@@ -143,7 +138,7 @@ module.exports = function (options) {
     });
     it('should include referenced resources which are deleted for requests with includeDeleted set to true', function (done) {
       request(baseUrl)
-        .patch('/people/' + ids.people[0])
+        .patch(`/people/${ids.people[0]}`)
         .set('content-type', 'application/json')
         .send(
           JSON.stringify([
@@ -158,7 +153,7 @@ module.exports = function (options) {
         .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
-            .del('/people/' + ids.people[0])
+            .del(`/people/${ids.people[0]}`)
             .expect(204)
             .end(function (err) {
               should.not.exist(err);
@@ -169,14 +164,12 @@ module.exports = function (options) {
                   should.not.exist(err);
                   request(baseUrl)
                     .get(
-                      '/people/' +
-                        ids.people[0] +
-                        '?includeDeleted=true&include=cars',
+                      `/people/${ids.people[0]}?includeDeleted=true&include=cars`,
                     )
                     .expect(200)
                     .end(function (err, res) {
                       should.not.exist(err);
-                      var body = JSON.parse(res.text);
+                      const body = JSON.parse(res.text);
                       should.exist(body.linked);
                       should.exist(body.linked.cars);
                       body.linked.cars.length.should.equal(2);
@@ -188,7 +181,7 @@ module.exports = function (options) {
     });
     it('should mark item with deletedAt', function (done) {
       request(baseUrl)
-        .del('/people/' + ids.people[0])
+        .del(`/people/${ids.people[0]}`)
         .end(function (err) {
           should.not.exist(err);
           adapter
@@ -219,7 +212,7 @@ module.exports = function (options) {
     });
     it('related resources should no longer reference deleted resource', function (done) {
       request(baseUrl)
-        .patch('/people/' + ids.people[0])
+        .patch(`/people/${ids.people[0]}`)
         .set('content-type', 'application/json')
         .send(
           JSON.stringify([
@@ -234,18 +227,19 @@ module.exports = function (options) {
         .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
-            .del('/people/' + ids.people[0])
+            .del(`/people/${ids.people[0]}`)
             .end(function (err) {
               should.not.exist(err);
               request(baseUrl)
                 .get(
-                  '/addresses/' +
-                    [ids.addresses[0], ids.addresses[1]].join(','),
+                  `/addresses/${[ids.addresses[0], ids.addresses[1]].join(
+                    ',',
+                  )}`,
                 )
                 .expect(200)
                 .end(function (err, res) {
                   should.not.exist(err);
-                  var body = JSON.parse(res.text);
+                  const body = JSON.parse(res.text);
                   body.addresses.forEach(function (address) {
                     should.not.exist(address.links);
                   });
@@ -256,7 +250,7 @@ module.exports = function (options) {
     });
     it('should keep existing links to foreign resources nested to _links', function (done) {
       request(baseUrl)
-        .patch('/people/' + ids.people[0])
+        .patch(`/people/${ids.people[0]}`)
         .set('content-type', 'application/json')
         .send(
           JSON.stringify([
@@ -276,7 +270,7 @@ module.exports = function (options) {
         .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
-            .del('/people/' + ids.people[0])
+            .del(`/people/${ids.people[0]}`)
             .end(function (err) {
               should.not.exist(err);
               adapter
@@ -297,7 +291,7 @@ module.exports = function (options) {
     });
     it('should cast _links ObjectId string filters', function (done) {
       request(baseUrl)
-        .patch('/people/' + ids.people[0])
+        .patch(`/people/${ids.people[0]}`)
         .set('content-type', 'application/json')
         .send(
           JSON.stringify([
@@ -312,19 +306,18 @@ module.exports = function (options) {
         .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
-            .del('/people/' + ids.people[0])
+            .del(`/people/${ids.people[0]}`)
             .expect(204)
             .end(function (err) {
               should.not.exist(err);
               request(baseUrl)
                 .get(
-                  '/people?includeDeleted=true&filter[_links.soulmate]=' +
-                    ids.people[1],
+                  `/people?includeDeleted=true&filter[_links.soulmate]=${ids.people[1]}`,
                 )
                 .expect(200)
                 .end(function (err, res) {
                   should.not.exist(err);
-                  var body = JSON.parse(res.text);
+                  const body = JSON.parse(res.text);
                   body.people.length.should.equal(1);
                   body.people[0].id.should.equal(ids.people[0]);
                   done();
@@ -334,7 +327,7 @@ module.exports = function (options) {
     });
     it('should be able to delete resource destructively', function (done) {
       request(baseUrl)
-        .del('/people/' + ids.people[0] + '?destroy=1')
+        .del(`/people/${ids.people[0]}?destroy=1`)
         .end(function (err) {
           should.not.exist(err);
           adapter
@@ -349,12 +342,12 @@ module.exports = function (options) {
     });
     it('should be able to destroy resource marked as deleted previously', function (done) {
       request(baseUrl)
-        .del('/people/' + ids.people[0])
+        .del(`/people/${ids.people[0]}`)
         .expect(204)
         .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
-            .del('/people/' + ids.people[0] + '?destroy=1')
+            .del(`/people/${ids.people[0]}?destroy=1`)
             .expect(204)
             .end(function (err) {
               should.not.exist(err);
@@ -364,7 +357,7 @@ module.exports = function (options) {
     });
     it('should not delete resource if beforeHook returns false', function (done) {
       request(baseUrl)
-        .del('/people/' + ids.people[0] + '?failbeforeAll=1')
+        .del(`/people/${ids.people[0]}?failbeforeAll=1`)
         .expect(321)
         .end(function (err) {
           should.not.exist(err);
@@ -381,13 +374,13 @@ module.exports = function (options) {
     });
     it('should return 410 for subsequent operations with deleted resource', function (done) {
       request(baseUrl)
-        .del('/people/' + ids.people[0])
+        .del(`/people/${ids.people[0]}`)
         .end(function (err) {
           should.not.exist(err);
-          RSVP.all([
+          Promise.all([
             new Promise(function (resolve) {
               request(baseUrl)
-                .get('/people/' + ids.people[0])
+                .get(`/people/${ids.people[0]}`)
                 .expect(410)
                 .end(function (err) {
                   should.not.exist(err);
@@ -396,7 +389,7 @@ module.exports = function (options) {
             }),
             new Promise(function (resolve) {
               request(baseUrl)
-                .patch('/people/' + ids.people[0])
+                .patch(`/people/${ids.people[0]}`)
                 .set('content-type', 'application/json')
                 .send(
                   JSON.stringify([
@@ -411,7 +404,7 @@ module.exports = function (options) {
             }),
             new Promise(function (resolve) {
               request(baseUrl)
-                .del('/people/' + ids.people[0])
+                .del(`/people/${ids.people[0]}`)
                 .expect(410)
                 .end(function (err) {
                   should.not.exist(err);
@@ -424,7 +417,7 @@ module.exports = function (options) {
                 .expect(200)
                 .end(function (err, res) {
                   should.not.exist(err);
-                  var body = JSON.parse(res.text);
+                  const body = JSON.parse(res.text);
                   body.people.forEach(function (person) {
                     person.id.should.not.equal(ids.people[0]);
                   });
@@ -438,21 +431,21 @@ module.exports = function (options) {
     });
     it('should return deleted resource if it is requested explicitly', function (done) {
       request(baseUrl)
-        .del('/people/' + ids.people[0])
+        .del(`/people/${ids.people[0]}`)
         .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
             .get('/people?includeDeleted=true')
             .end(function (err, res) {
-              var body = JSON.parse(res.text);
-              var del = _.find(body.people, function (p) {
+              const body = JSON.parse(res.text);
+              const del = _.find(body.people, function (p) {
                 return p.id === ids.people[0];
               });
               should.exist(del);
               request(baseUrl)
-                .get('/people/' + ids.people[0] + '?includeDeleted=true')
+                .get(`/people/${ids.people[0]}?includeDeleted=true`)
                 .end(function (err, res) {
-                  var body = JSON.parse(res.text);
+                  const body = JSON.parse(res.text);
                   should.exist(body.people[0]);
                   done();
                 });
@@ -461,27 +454,27 @@ module.exports = function (options) {
     });
     it('should return resource if deletedAt=null', function (done) {
       request(baseUrl)
-        .patch('/people/' + ids.people[0])
+        .patch(`/people/${ids.people[0]}`)
         .set('content-type', 'application/json')
         .send(
           JSON.stringify([
             { op: 'replace', path: '/people/0/deletedAt', value: null },
           ]),
         )
-        .end(function (err, res) {
+        .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
             .get('/people')
             .end(function (err, res) {
-              var body = JSON.parse(res.text);
-              var obj = _.find(body.people, function (p) {
+              const body = JSON.parse(res.text);
+              const obj = _.find(body.people, function (p) {
                 return p.id === ids.people[0];
               });
               should.exist(obj);
               request(baseUrl)
-                .get('/people/' + ids.people[0])
+                .get(`/people/${ids.people[0]}`)
                 .end(function (err, res) {
-                  var body = JSON.parse(res.text);
+                  const body = JSON.parse(res.text);
                   should.exist(body.people[0]);
                   done();
                 });
@@ -491,7 +484,7 @@ module.exports = function (options) {
 
     it('should not return deleted item with /:resource/:id/:linked response', function (done) {
       request(baseUrl)
-        .patch('/people/' + ids.people[0])
+        .patch(`/people/${ids.people[0]}`)
         .set('content-type', 'application/json')
         .send(
           JSON.stringify([
@@ -502,17 +495,17 @@ module.exports = function (options) {
             },
           ]),
         )
-        .end(function (err, res) {
+        .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
-            .del('/addresses/' + ids.addresses[0])
+            .del(`/addresses/${ids.addresses[0]}`)
             .end(function () {
               request(baseUrl)
-                .get('/people/' + ids.people[0] + '/addresses')
+                .get(`/people/${ids.people[0]}/addresses`)
                 .expect(200)
                 .end(function (err, res) {
                   should.not.exist(err);
-                  var body = JSON.parse(res.text);
+                  const body = JSON.parse(res.text);
                   body.addresses.length.should.equal(1);
                   done();
                 });
@@ -521,11 +514,11 @@ module.exports = function (options) {
     });
     it('should update resource on PATCH requests even if it is deleted', function (done) {
       request(baseUrl)
-        .del('/people/' + ids.people[0])
+        .del(`/people/${ids.people[0]}`)
         .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
-            .patch('/people/' + ids.people[0] + '?includeDeleted=true')
+            .patch(`/people/${ids.people[0]}?includeDeleted=true`)
             .set('content-type', 'application/json')
             .send(
               JSON.stringify([
@@ -536,10 +529,10 @@ module.exports = function (options) {
             .end(function (err) {
               should.not.exist(err);
               request(baseUrl)
-                .get('/people/' + ids.people[0] + '?includeDeleted=true')
+                .get(`/people/${ids.people[0]}?includeDeleted=true`)
                 .end(function (err, res) {
                   should.not.exist(err);
-                  var body = JSON.parse(res.text);
+                  const body = JSON.parse(res.text);
                   body.people[0].name.should.equal('DOA');
                   done();
                 });
@@ -548,11 +541,11 @@ module.exports = function (options) {
     });
     it.skip('should allow PUT request replacing old document with new one', function (done) {
       request(baseUrl)
-        .del('/people/' + ids.people[0])
+        .del(`/people/${ids.people[0]}`)
         .end(function (err) {
           should.not.exist(err);
           request(baseUrl)
-            .put('/people/' + ids.people[0])
+            .put(`/people/${ids.people[0]}`)
             .set('content-type', 'application/json')
             .send(
               JSON.stringify({
