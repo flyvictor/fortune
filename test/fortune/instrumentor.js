@@ -1,16 +1,15 @@
-var should = require('should');
-var sinon = require('sinon');
-var _ = require('lodash');
-var request = require('supertest');
-var fortune = require('../../lib/fortune');
+require('should');
+const sinon = require('sinon');
+const request = require('supertest');
+const fortune = require('../../lib/fortune');
 
-var port = 9895;
-var port2 = 9896;
-var baseUrl = 'http://localhost:' + port;
+const port = 9895;
+const port2 = 9896;
+const baseUrl = `http://localhost:${port}`;
 
-module.exports = function (options) {
+module.exports = function () {
   describe('custom instrumentor', function () {
-    var mockInstrumentor, app, tracerStub;
+    let mockInstrumentor, tracerStub;
 
     before(function () {
       mockInstrumentor = {
@@ -24,7 +23,7 @@ module.exports = function (options) {
       };
       tracerStub = mockInstrumentor.instrumentor.createTracer;
 
-      app = fortune({
+      fortune({
         adapter: 'mongodb',
         port: port,
         connectionString: 'mongodb://localhost/instrumentor-test',
@@ -43,7 +42,7 @@ module.exports = function (options) {
       request(baseUrl)
         .get('/users')
         .expect(200)
-        .end(function (err, res) {
+        .end(function () {
           tracerStub.should.be.called;
         });
       done();
@@ -53,26 +52,26 @@ module.exports = function (options) {
       request(baseUrl)
         .get('/users')
         .expect(200)
-        .end(function (err, res) {
-          _.each(tracerStub.args, function (arg) {
+        .end(function () {
+          for (const arg of tracerStub.args) {
             arg[0].should.be
               .type('string')
               .and.startWith(mockInstrumentor.options.tracePrefix);
 
             arg[1].should.be.type('function');
-          });
+          }
         });
       done();
     });
 
     it('should cause error when not valid', function (done) {
-      var invalidInstrumentor = {
+      const invalidInstrumentor = {
         methods: {
           createTransaction: sinon.stub().returnsArg(1),
         },
       };
-      var invalidInstrumentorApp = function () {
-        var app2 = fortune({
+      const invalidInstrumentorApp = function () {
+        fortune({
           adapter: 'mongodb',
           port: port,
           connectionString: 'mongodb://localhost/instrumentor-test2',

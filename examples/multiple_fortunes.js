@@ -1,5 +1,5 @@
-var fortune = require('../lib/fortune')
-  , express = fortune.express;
+const fortune = require('../lib/fortune'),
+  express = fortune.express;
 
 /**
  * Example demonstrating two different databases being
@@ -8,32 +8,30 @@ var fortune = require('../lib/fortune')
  * you will have to solve any problems that arise from
  * that yourself.
  */
-var container = express()
-  , port = process.argv[2] || 1337;
+const container = express(),
+  port = process.argv[2] || 1337;
 
-var peopleAPI = fortune({
-  db: 'people'
-})
-.resource('person', {
+const peopleAPI = fortune({
+  db: 'people',
+}).resource('person', {
   name: String,
-  age: Number
+  age: Number,
 });
 
-var animalsAPI = fortune({
-  db: 'animals'
-})
-.resource('animal', {
+const animalsAPI = fortune({
+  db: 'animals',
+}).resource('animal', {
   name: String,
   type: String,
-  age: Number
+  age: Number,
 });
 
 container
   .use(peopleAPI.router)
   .use(animalsAPI.router)
-  .get('/', function(req, res) {
+  .get('/', function (req, res) {
     res.send('Hello, you have reached the zoo API.');
   })
   .listen(port);
 
-console.log('Listening on port ' + port + '...');
+console.log(`Listening on port ${port}...`);

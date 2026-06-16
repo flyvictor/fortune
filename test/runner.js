@@ -1,24 +1,21 @@
-var should = require('should');
-var _ = require('lodash');
-var RSVP = require('rsvp');
-var request = require('supertest');
-var Promise = RSVP.Promise;
-var fixtures = require('./fixtures.json');
-var port = 8891;
-var baseUrl = 'http://localhost:' + port;
+const should = require('should');
+const request = require('supertest');
+const fixtures = require('./fixtures.json');
+const port = 8891;
+const baseUrl = `http://localhost:${port}`;
 process.env.DISASTER_RECOVERY_COUNT_ENABLED = 'true';
 
-describe('Fortune test runner', function () {
-  var options = {
-    app: null,
-    port: port,
-    baseUrl: baseUrl,
-    ids: {},
-  };
+const options = {
+  app: null,
+  port: port,
+  baseUrl: baseUrl,
+  ids: {},
+};
 
+describe('Fortune test runner', function () {
   before(function (done) {
-    var remoteDB = process.env.WERCKER_MONGODB_URL
-      ? process.env.WERCKER_MONGODB_URL + '/fortune'
+    const remoteDB = process.env.WERCKER_MONGODB_URL
+      ? `${process.env.WERCKER_MONGODB_URL}/fortune`
       : null;
 
     if (remoteDB) {
@@ -63,18 +60,21 @@ describe('Fortune test runner', function () {
       .then(function () {
         app.router.post('/remove-pets-link/:personid', function (req, res) {
           const Person = app.adapter.model('person');
-          Person.findOne(
-            { email: req.params.personid }).then((person) => {
+          Person.findOne({ email: req.params.personid })
+            .then((person) => {
               person.pets = null;
-              person.save().then(function () {
-                res.sendStatus(200);
-              }).catch(done);
-            }).catch((err) => {
+              person
+                .save()
+                .then(function () {
+                  res.sendStatus(200);
+                })
+                .catch(done);
+            })
+            .catch((err) => {
               console.error(err);
               res.send(500, err);
               return;
             });
-
         });
       })
       .then(done)
@@ -85,23 +85,23 @@ describe('Fortune test runner', function () {
   });
 
   beforeEach(function (done) {
-    var createResources = [];
+    const createResources = [];
     // console.log("runner beforeEach inserting resources");
 
-    _.each(fixtures, function (resources, collection) {
+    for (const [collection, resources] of Object.entries(fixtures)) {
       createResources.push(
         new Promise(function (resolve) {
-          var body = {};
+          const body = {};
           body[collection] = resources;
 
           request(baseUrl)
-            .post('/' + collection)
+            .post(`/${collection}`)
             .send(body)
             .expect('Content-Type', /json/)
             .expect(201)
             .end(function (error, response) {
               should.not.exist(error);
-              var resources = JSON.parse(response.text)[collection];
+              const resources = JSON.parse(response.text)[collection];
               options.ids[collection] = options.ids[collection] || [];
               resources.forEach(function (resource) {
                 options.ids[collection].push(resource.id);
@@ -110,9 +110,9 @@ describe('Fortune test runner', function () {
             });
         }),
       );
-    });
+    }
 
-    RSVP.all(createResources).then(
+    Promise.all(createResources).then(
       function () {
         done();
       },
@@ -122,25 +122,20 @@ describe('Fortune test runner', function () {
     );
   });
 
-  require('./fortune/all')(options);
-  require('./fortune-mongodb/mongodb.spec.js')(options);
-  require('./fortune-mongodb/helpers.spec')();
-  require('./querytree')(options);
-
   afterEach(function (done) {
-    var promises = [];
-    _.each(fixtures, function (resources, collection) {
+    const promises = [];
+    for (const collection of Object.keys(fixtures)) {
       promises.push(
-        new RSVP.Promise(function (resolve) {
+        new Promise(function (resolve) {
           request(baseUrl)
-            .del('/' + collection + '?destroy=true')
-            .end(function (error) {
+            .del(`/${collection}?destroy=true`)
+            .end(function () {
               resolve();
             });
         }),
       );
-    });
-    RSVP.all(promises).then(
+    }
+    Promise.all(promises).then(
       function () {
         options.ids = {};
         done();
@@ -150,4 +145,11 @@ describe('Fortune test runner', function () {
       },
     );
   });
+
+  /* eslint-disable mocha/no-setup-in-describe */
+  require('./fortune/all')(options);
+  require('./fortune-mongodb/mongodb.spec.js')(options);
+  require('./fortune-mongodb/helpers.spec')();
+  require('./querytree')(options);
+  /* eslint-enable mocha/no-setup-in-describe */
 });

@@ -1,12 +1,10 @@
 const should = require('should');
 const sinon = require('sinon');
 const request = require('supertest');
-const RSVP = require('rsvp');
 
 const _ = require('lodash');
 
 module.exports = function (options) {
-
   describe('MongoDB adapter', function () {
     let adapter, ids, baseUrl;
 
@@ -24,7 +22,8 @@ module.exports = function (options) {
         adapter.create('pet', doc).then(function () {
           const model = adapter.model('pet');
           model
-            .findOne({ _id: '123456789012345678901234' }).then(function (doc) {
+            .findOne({ _id: '123456789012345678901234' })
+            .then(function (doc) {
               should.exist(doc);
               done();
             })
@@ -38,7 +37,8 @@ module.exports = function (options) {
         adapter.create('person', doc).then(function () {
           const model = adapter.model('person');
           model
-            .findOne({ email: '123456789012345678901234' }).then(function (doc) {
+            .findOne({ email: '123456789012345678901234' })
+            .then(function (doc) {
               should.exist(doc);
               done();
             })
@@ -54,8 +54,8 @@ module.exports = function (options) {
         const model = adapter.model('person');
         model.schema.upsertKeys = ['upsertTest'];
 
-        let response = null,
-          origUpsert = adapter._shouldUpsert;
+        let response = null;
+        const origUpsert = adapter._shouldUpsert;
 
         adapter._shouldUpsert = function () {
           return (response = origUpsert.apply(this, arguments));
@@ -84,8 +84,8 @@ module.exports = function (options) {
         const model = adapter.model('person');
         model.schema.upsertKeys = ['upsertTest'];
 
-        let response = null,
-          origUpsert = adapter._shouldUpsert;
+        let response = null;
+        const origUpsert = adapter._shouldUpsert;
 
         adapter._shouldUpsert = function () {
           return (response = origUpsert.apply(this, arguments));
@@ -138,10 +138,10 @@ module.exports = function (options) {
           originalModels = adapter._models;
 
           sinon.stub(adapter, '_getInverseReferences');
-          sinon.stub(adapter, '_updateOneToOne').returns(RSVP.resolve());
-          sinon.stub(adapter, '_updateOneToMany').returns(RSVP.resolve());
-          sinon.stub(adapter, '_updateManyToOne').returns(RSVP.resolve());
-          sinon.stub(adapter, '_updateManyToMany').returns(RSVP.resolve());
+          sinon.stub(adapter, '_updateOneToOne').returns(Promise.resolve());
+          sinon.stub(adapter, '_updateOneToMany').returns(Promise.resolve());
+          sinon.stub(adapter, '_updateManyToOne').returns(Promise.resolve());
+          sinon.stub(adapter, '_updateManyToMany').returns(Promise.resolve());
 
           primaryModel = {
             modelName: 'TBD below',
@@ -891,12 +891,9 @@ module.exports = function (options) {
           },
         );
 
-        const countriesWithoutLocation = await adapter.findMany(
-          'country',
-          {
-            name: 'United States',
-          },
-        );
+        const countriesWithoutLocation = await adapter.findMany('country', {
+          name: 'United States',
+        });
         countriesWithoutLocation[0].slug.should.eql('us');
 
         const countriesWithLocation = await adapter.findMany(
@@ -910,11 +907,15 @@ module.exports = function (options) {
         countriesWithLocation[0].slug.should.eql('us-ae');
       });
       it('should update sharded cache collection with updated data', async function () {
-        await adapter.update('country', {
-          name: 'United States',
-        }, {
-          slug: 'us-updated',
-        });
+        await adapter.update(
+          'country',
+          {
+            name: 'United States',
+          },
+          {
+            slug: 'us-updated',
+          },
+        );
 
         const shardedCountries = await adapter.db.collections['country-locs']
           .find({
@@ -929,13 +930,10 @@ module.exports = function (options) {
         shardedCountries[1].slug.should.eql('us-updated');
       });
       it('should create sharded cache collection with new data', async function () {
-        await adapter.create(
-          'country',
-          {
-            name: 'New Country',
-            slug: 'new',
-          },
-        );
+        await adapter.create('country', {
+          name: 'New Country',
+          slug: 'new',
+        });
 
         const shardedCountries = await adapter.db.collections['country-locs']
           .find({

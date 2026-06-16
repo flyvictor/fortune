@@ -28,7 +28,19 @@
     "prefer-template": "error",
     "prefer-const": "error",
     "node/no-unpublished-require": ["error", {
-      "allowModules": ["chai", "should", "sinon", "sinon-chai", "chai-as-promised"]
+      "allowModules": ["chai", "should", "sinon", "sinon-chai", "chai-as-promised", "supertest"]
     }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["test/**/*.js"],
+      "rules": {
+        "mocha/no-exports": "off",
+        "mocha/no-sibling-hooks": "off",
+        "mocha/no-hooks-for-single-case": "off",
+        "mocha/no-top-level-hooks": "off",
+        "mocha/no-skipped-tests": "off"
+      }
+    }
+  ]
 }
