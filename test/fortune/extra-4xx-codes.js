@@ -40,6 +40,19 @@ module.exports = function (options) {
         });
     });
 
+    it('should return 403 for an action on a non-permitted doc', function (done) {
+      request(baseUrl)
+        .post(`/people/${ids.people[0]}/reset-password`)
+        .set('set-fortune-extension', 'born-in-1995')
+        .set('content-type', 'application/json')
+        .send(JSON.stringify({ password: 'new password' }))
+        .expect(403)
+        .end(function (err) {
+          should.not.exist(err);
+          done();
+        });
+    });
+
     it('should return 410 for a non-destructively deleted doc', function (done) {
       request(baseUrl)
         .del(`/people/${ids.people[0]}`)
